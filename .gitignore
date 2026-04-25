@@ -3,6 +3,7 @@
 
 # Local runtime configs (machine-specific)
 .agent/*.local.json
+env/git-push.local.env
 
 # Python caches / virtual env
 __pycache__/
@@ -18,3 +19,6 @@ __pycache__/
 
 # External business repos (do not include in this Python project repo)
 repos/
+
+# Optional in-project SSH key directory (do not upload private keys)
+.keys/

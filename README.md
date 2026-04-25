@@ -284,6 +284,18 @@ MODEL_API_KEY=
 ./scripts/start-agent.sh --env-file /absolute/path/to/custom.env
 ```
 
+项目内 GitHub 推送配置（不依赖本机 `~/.ssh/config`）：
+
+```bash
+# 1) 编辑项目内推送配置（不上传）
+vim env/git-push.local.env
+
+# 2) 一键推送（使用配置里的 SSH key）
+./scripts/git-push.sh
+```
+
+示例模板：`env/git-push.example.env`
+
 OpenAI 兼容接口示例：
 
 ```env
