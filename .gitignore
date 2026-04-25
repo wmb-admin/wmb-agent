@@ -1,0 +1,20 @@
+# Local environment and secrets
+.env
+
+# Local runtime configs (machine-specific)
+.agent/*.local.json
+
+# Python caches / virtual env
+__pycache__/
+*.pyc
+.venv/
+
+# IDE and local runtime data
+.idea/
+.data/
+
+# Local Maven cache mirror
+.m2repo/
+
+# External business repos (do not include in this Python project repo)
+repos/

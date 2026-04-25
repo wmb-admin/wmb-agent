@@ -1,0 +1,3828 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beauty SaaS Agent Console</title>
+    <style>
+      :root {
+        --bg: #e7edf4;
+        --panel: rgba(255, 255, 255, 0.82);
+        --ink: #12293a;
+        --muted: #4d6576;
+        --accent: #1188c9;
+        --accent-soft: rgba(17, 136, 201, 0.12);
+        --warn: #bf5f43;
+        --line: rgba(19, 62, 88, 0.16);
+        --shadow: 0 20px 42px rgba(16, 34, 49, 0.11);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Avenir Next", "PingFang SC", sans-serif;
+        color: var(--ink);
+        background:
+          linear-gradient(120deg, rgba(17, 136, 201, 0.12), transparent 42%),
+          radial-gradient(circle at top right, rgba(57, 195, 169, 0.12), transparent 26%),
+          repeating-linear-gradient(90deg, rgba(19, 62, 88, 0.04) 0 1px, transparent 1px 68px),
+          repeating-linear-gradient(0deg, rgba(19, 62, 88, 0.04) 0 1px, transparent 1px 68px),
+          var(--bg);
+      }
+      .shell {
+        max-width: 1520px;
+        margin: 0 auto;
+        padding: 24px 20px 56px;
+      }
+      .console-head {
+        padding: 20px 22px;
+        margin-bottom: 18px;
+      }
+      .brand-block {
+        display: grid;
+        gap: 8px;
+      }
+      .brand-kicker {
+        display: inline-flex;
+        width: fit-content;
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(17, 136, 201, 0.24);
+        background: rgba(17, 136, 201, 0.08);
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .brand-title {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.1;
+        letter-spacing: 0.02em;
+      }
+      .brand-desc {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+        max-width: 780px;
+      }
+      .view-tabs {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .view-tab {
+        appearance: none;
+        border: 1px solid rgba(19, 62, 88, 0.2);
+        background: rgba(255, 255, 255, 0.62);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .view-tab.active {
+        color: var(--accent);
+        border-color: rgba(17, 136, 201, 0.34);
+        background: rgba(17, 136, 201, 0.12);
+        box-shadow: inset 0 0 0 1px rgba(17, 136, 201, 0.12);
+      }
+      .view-pane {
+        display: none;
+      }
+      .view-pane.active {
+        display: block;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        backdrop-filter: blur(4px);
+        box-shadow: var(--shadow);
+      }
+      .hero-main {
+        padding: 28px;
+      }
+      .hero-main h1 {
+        margin: 0 0 10px;
+        font-size: 36px;
+        line-height: 1.05;
+      }
+      .hero-main p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 18px;
+      }
+      .stat {
+        padding: 18px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(17, 136, 201, 0.12), rgba(255, 255, 255, 0.72));
+        border: 1px solid rgba(17, 136, 201, 0.18);
+      }
+      .stat strong {
+        display: block;
+        font-size: 28px;
+        margin-top: 10px;
+      }
+      .stat span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 20px;
+      }
+      .tasks-layout {
+        grid-template-columns: 1fr;
+      }
+      .system-layout {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .section {
+        padding: 22px;
+      }
+      .section h2 {
+        margin: 0 0 16px;
+        font-size: 20px;
+      }
+      .list {
+        display: grid;
+        gap: 12px;
+      }
+      .card {
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.65);
+        padding: 16px;
+      }
+      .card.selected {
+        border-color: rgba(14, 139, 123, 0.45);
+        box-shadow: inset 0 0 0 1px rgba(14, 139, 123, 0.18);
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .pill.warn {
+        background: rgba(199, 91, 57, 0.12);
+        color: var(--warn);
+      }
+      code {
+        font-family: "SFMono-Regular", ui-monospace, monospace;
+        font-size: 12px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .button {
+        appearance: none;
+        border: 1px solid rgba(17, 136, 201, 0.22);
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .button.warn {
+        border-color: rgba(199, 91, 57, 0.2);
+        background: rgba(199, 91, 57, 0.12);
+        color: var(--warn);
+      }
+      .button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .detail-grid {
+        display: grid;
+        gap: 12px;
+      }
+      .detail-group {
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.65);
+        padding: 16px;
+      }
+      .detail-group h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+      .detail-list {
+        display: grid;
+        gap: 8px;
+      }
+      .location-groups {
+        display: grid;
+        gap: 10px;
+      }
+      .location-group-card {
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.65);
+        padding: 12px;
+      }
+      .location-group-card.active {
+        border-color: rgba(14, 139, 123, 0.45);
+        box-shadow: inset 0 0 0 1px rgba(14, 139, 123, 0.18);
+      }
+      .location-lines {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .timeline-meta {
+        display: grid;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .detail-empty {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .hint {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .auto-hint {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(17, 136, 201, 0.2);
+        background: rgba(17, 136, 201, 0.08);
+        color: #0f5f89;
+        font-size: 12px;
+      }
+      details.advanced-options {
+        margin-top: 12px;
+        border-radius: 16px;
+        border: 1px dashed rgba(19, 62, 88, 0.24);
+        background: rgba(255, 255, 255, 0.56);
+        padding: 10px 12px;
+      }
+      details.advanced-options summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        user-select: none;
+      }
+      details.advanced-options[open] summary {
+        margin-bottom: 10px;
+      }
+      .workspace-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+      }
+      .section-head p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .runtime-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .composer-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+      .field-span-2 {
+        grid-column: 1 / -1;
+      }
+      .field-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.8);
+        color: var(--ink);
+        font: inherit;
+        padding: 12px 14px;
+      }
+      textarea {
+        min-height: 116px;
+        resize: vertical;
+        line-height: 1.6;
+      }
+      .checkbox-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .checkbox-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.75);
+        font-size: 13px;
+      }
+      .checkbox-chip input {
+        margin: 0;
+      }
+      .preset-strip,
+      .feedback-grid,
+      .transcript,
+      .event-list,
+      .step-list {
+        display: grid;
+        gap: 12px;
+      }
+      .feedback-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 16px;
+      }
+      .feedback-card,
+      .message,
+      .event-item {
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.72);
+        padding: 14px;
+      }
+      .feedback-card h3,
+      .message h3,
+      .event-item h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+      .message.user {
+        background: linear-gradient(180deg, rgba(14, 139, 123, 0.12), rgba(255, 250, 243, 0.92));
+      }
+      .message.assistant {
+        background: rgba(255, 255, 255, 0.78);
+      }
+      .message-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .message-body,
+      .content-body {
+        line-height: 1.65;
+        word-break: break-word;
+      }
+      .message-body .md-gap,
+      .content-body .md-gap {
+        height: 8px;
+      }
+      .message-body .md-line,
+      .content-body .md-line {
+        margin: 2px 0;
+      }
+      .message-body .md-h1,
+      .content-body .md-h1 {
+        margin: 8px 0 4px;
+        font-size: 18px;
+        font-weight: 800;
+      }
+      .message-body .md-h2,
+      .content-body .md-h2 {
+        margin: 7px 0 4px;
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .message-body .md-h3,
+      .content-body .md-h3 {
+        margin: 6px 0 3px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .message-body .md-li,
+      .content-body .md-li {
+        margin: 2px 0;
+        padding-left: 6px;
+      }
+      .inline-code {
+        display: inline-block;
+        padding: 0 6px;
+        border-radius: 8px;
+        border: 1px solid rgba(31, 42, 43, 0.14);
+        background: rgba(31, 42, 43, 0.06);
+        font-family: "SFMono-Regular", ui-monospace, monospace;
+        font-size: 12px;
+      }
+      .markdown-code-block {
+        margin: 10px 0;
+        border-radius: 14px;
+        border: 1px solid rgba(216, 207, 193, 0.86);
+        overflow: hidden;
+      }
+      .code-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 10px;
+        background: rgba(31, 42, 43, 0.08);
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .markdown-code-block pre {
+        margin: 0;
+        border-radius: 0;
+        border: 0;
+      }
+      .code-k {
+        color: #8cc7ff;
+        font-weight: 700;
+      }
+      .code-n {
+        color: #f5bc7f;
+      }
+      .code-c {
+        color: #7ca78f;
+      }
+      .list-window-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .list-window-toolbar .muted {
+        font-size: 12px;
+      }
+      .content-body {
+        padding: 14px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid var(--line);
+      }
+      .transcript {
+        max-height: 880px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+      .empty-state {
+        border-radius: 16px;
+        border: 1px dashed rgba(93, 108, 109, 0.35);
+        padding: 16px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.5);
+      }
+      .step-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .json-preview {
+        margin-top: 10px;
+        max-height: 180px;
+      }
+      .insight-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .insight-list {
+        display: grid;
+        gap: 12px;
+      }
+      .insight-item {
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.72);
+        padding: 14px;
+      }
+      .insight-item strong {
+        display: block;
+      }
+      .insight-item .muted {
+        margin-top: 8px;
+        line-height: 1.55;
+      }
+      .filter-bar {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr auto;
+        gap: 10px;
+        margin-top: 14px;
+        margin-bottom: 14px;
+      }
+      .favorite-toggle {
+        appearance: none;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.76);
+        color: var(--muted);
+        border-radius: 14px;
+        padding: 10px 12px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .favorite-toggle.active {
+        background: rgba(199, 91, 57, 0.12);
+        border-color: rgba(199, 91, 57, 0.25);
+        color: var(--warn);
+      }
+      .star-button {
+        appearance: none;
+        border: 1px solid rgba(216, 207, 193, 0.8);
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .star-button.active {
+        color: var(--warn);
+        border-color: rgba(199, 91, 57, 0.28);
+        background: rgba(199, 91, 57, 0.12);
+      }
+      .task-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .report-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .report-preview {
+        margin-top: 12px;
+        max-height: 320px;
+      }
+      .task-detail-panel {
+        position: sticky;
+        top: 14px;
+        align-self: start;
+        max-height: calc(100vh - 28px);
+        overflow: auto;
+      }
+      .task-detail-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+      }
+      .task-detail-modal.active {
+        display: flex;
+      }
+      .task-detail-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(10, 23, 36, 0.54);
+        backdrop-filter: blur(2px);
+      }
+      .task-detail-modal-dialog {
+        position: relative;
+        width: min(1320px, calc(100vw - 36px));
+        max-height: calc(100vh - 36px);
+        overflow: hidden;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        border-radius: 22px;
+      }
+      .task-detail-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(17, 136, 201, 0.1), rgba(255, 255, 255, 0.68));
+      }
+      .task-detail-modal-head h2 {
+        margin: 0;
+        font-size: 19px;
+      }
+      .task-detail-modal-content {
+        overflow: auto;
+        padding: 16px 18px 22px;
+      }
+      body.modal-open {
+        overflow: hidden;
+      }
+      pre {
+        margin: 0;
+        padding: 14px;
+        border-radius: 14px;
+        background: #1e2324;
+        color: #f3f0ea;
+        overflow: auto;
+        max-height: 320px;
+      }
+      @media (max-width: 1024px) {
+        .layout, .workspace-grid, .feedback-grid, .composer-grid, .tasks-layout, .system-layout {
+          grid-template-columns: 1fr;
+        }
+        .console-head {
+          padding: 18px 16px;
+        }
+        .brand-title {
+          font-size: 24px;
+        }
+        .task-detail-panel {
+          position: static;
+          max-height: none;
+          overflow: visible;
+        }
+        .task-detail-modal {
+          padding: 10px;
+        }
+        .task-detail-modal-dialog {
+          width: calc(100vw - 20px);
+          max-height: calc(100vh - 20px);
+        }
+        .filter-bar,
+        .insight-grid {
+          grid-template-columns: 1fr;
+        }
+        .field-span-2 {
+          grid-column: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="panel console-head">
+        <div class="brand-block">
+          <div class="brand-kicker">Multi-Agent Runtime</div>
+          <h1 class="brand-title">Beauty SaaS Agent Console</h1>
+          <p class="brand-desc">页面已拆分为任务编排、任务追踪、系统中心三大视图。你可以按场景进入，减少信息拥挤并提升操作效率。</p>
+        </div>
+        <div class="view-tabs" id="view-tabs">
+          <button class="view-tab active" data-view-target="workspace">任务编排</button>
+          <button class="view-tab" data-view-target="tasks">任务追踪</button>
+          <button class="view-tab" data-view-target="system">系统中心</button>
+        </div>
+        <div class="status-grid" id="summary-grid"></div>
+      </header>
+
+      <section class="view-pane active" data-view-pane="workspace">
+        <section class="workspace-grid">
+          <div class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>交流工作台</h2>
+                <p>直接向 Agent 发起需求、追问和复盘。这里会保留你的本地会话，并把每一轮结果同步到任务面板里。</p>
+              </div>
+              <div class="actions">
+                <button class="button" id="composer-clear">清空会话</button>
+                <button class="button" id="composer-stop-stack">关闭前后端项目</button>
+                <button class="button warn" id="composer-submit">发送本轮交流</button>
+              </div>
+            </div>
+            <div class="runtime-strip" id="runtime-strip"></div>
+            <div class="composer-grid">
+              <label class="field field-span-2">
+                <span class="field-title">本轮想让 Agent 做什么</span>
+                <textarea id="composer-task" placeholder="例如：帮我把交流页面做得更完整，重点展示执行反馈、Agent 步骤和可继续追问的记录。"></textarea>
+              </label>
+              <label class="field">
+                <span class="field-title">版本标记</span>
+                <input id="composer-version" type="text" placeholder="例如：v1.0.0 / beauty-v2" />
+              </label>
+              <label class="field">
+                <span class="field-title">期望产出</span>
+                <textarea id="composer-expected-output" placeholder="例如：希望直接改代码，并给出可验证结果。"></textarea>
+              </label>
+              <label class="field field-span-2">
+                <span class="field-title">补充上下文</span>
+                <textarea id="composer-context" placeholder="补充业务背景、约束、边界条件。会作为 context 传给 Agent。"></textarea>
+              </label>
+            </div>
+            <div class="auto-hint">
+              自动模式已开启：默认使用 <code>full_iteration</code>，执行 <code>validate</code>，作用仓库默认 <code>backend + frontend</code>，由多 Agent 自动协作完成开发与验证。
+            </div>
+            <details class="advanced-options">
+              <summary>高级选项（通常不需要改）</summary>
+              <div class="composer-grid">
+                <label class="field">
+                  <span class="field-title">Workflow</span>
+                  <select id="composer-workflow"></select>
+                </label>
+                <label class="field">
+                  <span class="field-title">执行模式</span>
+                  <select id="composer-execution-mode"></select>
+                </label>
+              </div>
+              <div class="field field-span-2">
+                <div class="row">
+                  <span class="field-title">作用仓库</span>
+                  <span class="muted">不勾选时由 Agent 根据 workflow / agent 自动推断</span>
+                </div>
+                <div class="checkbox-list" id="composer-repos"></div>
+              </div>
+            </details>
+            <div class="preset-strip" id="composer-presets"></div>
+            <div class="hint" id="composer-status">准备就绪。默认会自动全链路执行（前后端 + 测试）；通常你只需要描述任务目标。</div>
+            <div class="feedback-grid" id="latest-feedback"></div>
+          </div>
+          <div class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>会话记录</h2>
+                <p>保留最近的用户提问与 Agent 反馈，方便继续追问，不用每次重新组织完整上下文。</p>
+              </div>
+            </div>
+            <div class="transcript" id="conversation-thread"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view-pane" data-view-pane="tasks">
+        <section class="layout tasks-layout">
+          <div class="panel section">
+            <div class="task-toolbar">
+              <h2>最近任务</h2>
+              <div class="muted" id="tasks-filter-meta">展示全部任务</div>
+            </div>
+            <div class="filter-bar">
+              <input id="task-search" type="text" placeholder="搜索任务、workflow、task_id" />
+              <select id="task-status-filter">
+                <option value="">全部状态</option>
+                <option value="completed">completed</option>
+                <option value="blocked">blocked</option>
+                <option value="failed">failed</option>
+                <option value="canceled">canceled</option>
+                <option value="running">running</option>
+                <option value="planned">planned</option>
+              </select>
+              <button class="favorite-toggle" id="task-favorites-toggle">仅看收藏</button>
+            </div>
+            <div class="list" id="tasks"></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="view-pane" data-view-pane="system">
+        <section class="insight-grid">
+          <div class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>系统就绪度</h2>
+                <p>这里聚合模型、Prompt、仓库和 Git 凭据状态，帮你判断当前能不能顺畅进入发布任务阶段。</p>
+              </div>
+              <div class="actions">
+                <button class="button" id="reload-runtime-config">重载配置</button>
+                <button class="button" id="run-model-check">检测模型</button>
+              </div>
+            </div>
+            <div class="insight-list" id="readiness-panel"></div>
+          </div>
+          <div class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>流程体检</h2>
+                <p>从启动服务、测试 Agent、发布任务，到各 Agent 分工与最终验收，快速看链路是否完整。</p>
+              </div>
+            </div>
+            <div class="insight-list" id="flow-audit-panel"></div>
+          </div>
+          <div class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>GitHub Skills 库存</h2>
+                <p>只看真正从 GitHub 导入的插件，并标出它们是否已经被 workflow 用起来。</p>
+              </div>
+            </div>
+            <div class="insight-list" id="github-skills-panel"></div>
+          </div>
+        </section>
+
+        <section class="layout system-layout">
+          <div class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>模型模式切换</h2>
+                <p>在低负载开发模式与高质量推理模式之间一键切换，切换后新任务立即生效。</p>
+              </div>
+            </div>
+            <div class="insight-list" id="model-mode-panel"></div>
+          </div>
+          <div class="panel section">
+            <div class="section-head">
+              <div>
+                <h2>Bug 分诊规则</h2>
+                <p>可视化维护“是否是 bug、归属前后端/运维、注入哪些 skills”的规则配置。</p>
+              </div>
+            </div>
+            <div class="insight-list" id="bug-triage-panel"></div>
+          </div>
+          <div class="panel section">
+            <h2>Prompt 版本</h2>
+            <div class="list" id="prompts"></div>
+          </div>
+          <div class="panel section">
+            <h2>Skill 插件</h2>
+            <div class="list" id="plugins"></div>
+          </div>
+          <div class="panel section">
+            <h2>仓库与服务</h2>
+            <div class="list" id="repos"></div>
+            <div class="list" id="services" style="margin-top: 12px;"></div>
+          </div>
+          <div class="panel section">
+            <h2>运行进程</h2>
+            <div class="list" id="runtime-processes"></div>
+          </div>
+          <div class="panel section" style="grid-column: 1 / -1;">
+            <h2>原始摘要</h2>
+            <pre id="raw"></pre>
+          </div>
+        </section>
+      </section>
+    </div>
+    <div class="task-detail-modal" id="task-detail-modal" aria-hidden="true">
+      <div class="task-detail-modal-backdrop" data-close-task-detail-modal="1"></div>
+      <div class="panel section task-detail-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="task-detail-modal-title">
+        <div class="task-detail-modal-head">
+          <h2 id="task-detail-modal-title">任务详情弹窗</h2>
+          <button class="button" id="task-detail-modal-close">关闭</button>
+        </div>
+        <div class="task-detail-modal-content" id="task-detail-modal-content"></div>
+      </div>
+    </div>
+    <script>
+      const dashboardState = {
+        taskItems: [],
+        taskDetails: {},
+        selectedTaskId: null,
+        selectedSnippet: null,
+        selectedDiff: null,
+        taskFileMeta: {},
+        meta: null,
+        promptItems: [],
+        repoItems: [],
+        activeResponse: null,
+        conversationMessages: [],
+        plugins: [],
+        modelCheck: null,
+        modelCheckStatus: 'idle',
+        modelMode: null,
+        modelModeStatus: 'idle',
+        modelModeSwitching: false,
+        bugTriage: null,
+        bugTriageStatus: 'idle',
+        bugTriageDraft: '',
+        bugTriageSaving: false,
+        favoriteTaskIds: [],
+        taskFilterText: '',
+        taskFilterStatus: '',
+        taskFilterFavoritesOnly: false,
+        activeTaskDetail: null,
+        pollingTaskId: null,
+        pollingHandle: null,
+        streamSource: null,
+        streamTaskId: null,
+        streamLastEventId: 0,
+        streamStatus: 'idle',
+        liveRenderScheduled: false,
+        conversationVisibleCount: 24,
+        stepVisibleCountByTask: {},
+        eventVisibleCountByTask: {},
+        conversationAutoScroll: true,
+        activeView: 'workspace',
+        taskDetailModalOpen: false,
+      };
+      const conversationStorageKey = 'beauty-saas-agent-console-conversation-v2';
+      const favoriteTaskStorageKey = 'beauty-saas-agent-favorite-tasks-v1';
+      const activeViewStorageKey = 'beauty-saas-agent-active-view-v1';
+
+      function safeReadConversation() {
+        try {
+          const raw = window.localStorage.getItem(conversationStorageKey);
+          if (!raw) return [];
+          const items = JSON.parse(raw);
+          return Array.isArray(items) ? items : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function persistConversation() {
+        try {
+          window.localStorage.setItem(
+            conversationStorageKey,
+            JSON.stringify(dashboardState.conversationMessages.slice(-12))
+          );
+        } catch (error) {
+          console.warn('persistConversation failed', error);
+        }
+      }
+
+      function safeReadFavoriteTasks() {
+        try {
+          const raw = window.localStorage.getItem(favoriteTaskStorageKey);
+          if (!raw) return [];
+          const items = JSON.parse(raw);
+          return Array.isArray(items) ? items : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      function normalizeViewName(value) {
+        const view = String(value || '').trim().toLowerCase();
+        if (view === 'workspace' || view === 'tasks' || view === 'system') {
+          return view;
+        }
+        return 'workspace';
+      }
+
+      function safeReadActiveView() {
+        try {
+          const fromHash = window.location.hash.replace('#', '').trim();
+          if (fromHash) {
+            return normalizeViewName(fromHash);
+          }
+          const saved = window.localStorage.getItem(activeViewStorageKey) || 'workspace';
+          return normalizeViewName(saved);
+        } catch (error) {
+          return 'workspace';
+        }
+      }
+
+      function setActiveView(view, options = {}) {
+        const nextView = normalizeViewName(view);
+        const shouldPersist = options.persist !== false;
+        const shouldUpdateHash = options.updateHash !== false;
+        dashboardState.activeView = nextView;
+        document.querySelectorAll('[data-view-pane]').forEach((node) => {
+          node.classList.toggle('active', node.dataset.viewPane === nextView);
+        });
+        document.querySelectorAll('[data-view-target]').forEach((node) => {
+          node.classList.toggle('active', node.dataset.viewTarget === nextView);
+        });
+        if (shouldPersist) {
+          try {
+            window.localStorage.setItem(activeViewStorageKey, nextView);
+          } catch (error) {
+            console.warn('persist active view failed', error);
+          }
+        }
+        if (shouldUpdateHash && window.location.hash !== `#${nextView}`) {
+          window.history.replaceState(null, '', `#${nextView}`);
+        }
+        if (dashboardState.meta) {
+          renderRuntimeStrip(dashboardState.meta);
+        }
+      }
+
+      function initViewTabs() {
+        document.querySelectorAll('[data-view-target]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const next = button.dataset.viewTarget || 'workspace';
+            setActiveView(next);
+          });
+        });
+        window.addEventListener('hashchange', () => {
+          const fromHash = window.location.hash.replace('#', '').trim();
+          if (!fromHash) {
+            return;
+          }
+          setActiveView(fromHash, { persist: true, updateHash: false });
+        });
+      }
+
+      function getTaskDetailRoots() {
+        return ['task-detail-modal-content']
+          .map((id) => document.getElementById(id))
+          .filter(Boolean);
+      }
+
+      function setTaskDetailModalVisible(visible) {
+        const modal = document.getElementById('task-detail-modal');
+        if (!modal) return;
+        dashboardState.taskDetailModalOpen = !!visible;
+        modal.classList.toggle('active', !!visible);
+        modal.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        document.body.classList.toggle('modal-open', !!visible);
+      }
+
+      function initTaskDetailModal() {
+        const modal = document.getElementById('task-detail-modal');
+        if (!modal) return;
+        modal.querySelectorAll('[data-close-task-detail-modal]').forEach((button) => {
+          button.addEventListener('click', () => {
+            setTaskDetailModalVisible(false);
+          });
+        });
+        const closeButton = document.getElementById('task-detail-modal-close');
+        if (closeButton) {
+          closeButton.addEventListener('click', () => {
+            setTaskDetailModalVisible(false);
+          });
+        }
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && dashboardState.taskDetailModalOpen) {
+            setTaskDetailModalVisible(false);
+          }
+        });
+      }
+
+      async function openTaskDetailModal(taskId) {
+        if (!taskId) return;
+        const modalRoot = document.getElementById('task-detail-modal-content');
+        if (modalRoot) {
+          modalRoot.innerHTML = `<div class="detail-empty">正在加载任务详情...</div>`;
+        }
+        setTaskDetailModalVisible(true);
+        try {
+          await selectTask(taskId, { switchView: false, openModal: true });
+        } catch (error) {
+          if (modalRoot) {
+            modalRoot.innerHTML = `<div class="detail-empty">任务详情加载失败：${escapeHtml(String(error))}</div>`;
+          }
+          console.warn('openTaskDetailModal failed', error);
+        }
+      }
+
+      function persistFavoriteTasks() {
+        try {
+          window.localStorage.setItem(
+            favoriteTaskStorageKey,
+            JSON.stringify(Array.from(new Set(dashboardState.favoriteTaskIds)).slice(-48))
+          );
+        } catch (error) {
+          console.warn('persistFavoriteTasks failed', error);
+        }
+      }
+
+      function isFavoriteTask(taskId) {
+        return dashboardState.favoriteTaskIds.includes(taskId);
+      }
+
+      function toggleFavoriteTask(taskId) {
+        if (isFavoriteTask(taskId)) {
+          dashboardState.favoriteTaskIds = dashboardState.favoriteTaskIds.filter((item) => item !== taskId);
+        } else {
+          dashboardState.favoriteTaskIds = [taskId, ...dashboardState.favoriteTaskIds];
+        }
+        persistFavoriteTasks();
+        renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+      }
+
+      function filteredTaskItems(items) {
+        const query = dashboardState.taskFilterText.trim().toLowerCase();
+        const filtered = items.filter((item) => {
+          if (dashboardState.taskFilterStatus && item.status !== dashboardState.taskFilterStatus) {
+            return false;
+          }
+          if (dashboardState.taskFilterFavoritesOnly && !isFavoriteTask(item.task_id)) {
+            return false;
+          }
+          if (!query) {
+            return true;
+          }
+          const haystack = [
+            item.task_id,
+            item.task,
+            item.workflow,
+            item.status,
+            ...(item.used_agents || []),
+            ...(item.used_skills || []),
+          ].join(' ').toLowerCase();
+          return haystack.includes(query);
+        });
+        return filtered.sort((left, right) => {
+          const favoriteScore = Number(isFavoriteTask(right.task_id)) - Number(isFavoriteTask(left.task_id));
+          if (favoriteScore !== 0) return favoriteScore;
+          return new Date(right.created_at || 0).getTime() - new Date(left.created_at || 0).getTime();
+        });
+      }
+
+      function updateTaskFilterMeta(totalCount, filteredCount) {
+        const root = document.getElementById('tasks-filter-meta');
+        const parts = [];
+        if (dashboardState.taskFilterStatus) parts.push(`状态=${dashboardState.taskFilterStatus}`);
+        if (dashboardState.taskFilterFavoritesOnly) parts.push('仅收藏');
+        if (dashboardState.taskFilterText) parts.push(`搜索="${dashboardState.taskFilterText}"`);
+        const label = parts.length ? parts.join(' / ') : '展示全部任务';
+        root.textContent = `${label} · ${filteredCount}/${totalCount}`;
+      }
+
+      function buildConversationPayload() {
+        return dashboardState.conversationMessages
+          .filter((item) => item.role === 'user' || item.role === 'assistant')
+          .map((item) => ({
+            role: item.role,
+            content: item.content,
+          }))
+          .slice(-8);
+      }
+
+      function setComposerStatus(message, isWarn = false) {
+        const root = document.getElementById('composer-status');
+        root.textContent = message;
+        root.style.color = isWarn ? 'var(--warn)' : 'var(--muted)';
+      }
+
+      function renderRuntimeStrip(meta) {
+        const root = document.getElementById('runtime-strip');
+        const activePrompt = (dashboardState.promptItems || []).find((item) => item.is_active);
+        const repoCount = (dashboardState.repoItems || []).length;
+        const mode = ((dashboardState.modelMode || {}).mode || 'unknown').toLowerCase();
+        const modeLabelMap = {
+          dev: 'mode: 低负载(dev)',
+          hq: 'mode: 高质量(hq)',
+          custom: 'mode: custom',
+        };
+        const streamStatusMap = {
+          idle: 'stream: idle',
+          connecting: 'stream: connecting',
+          live: 'stream: live',
+          reconnecting: 'stream: reconnecting',
+          fallback: 'stream: polling fallback',
+        };
+        const streamLabel = streamStatusMap[dashboardState.streamStatus] || `stream: ${dashboardState.streamStatus}`;
+        root.innerHTML = [
+          `<span class="pill">${escapeHtml(meta.model_provider || 'unknown')}</span>`,
+          `<span class="pill">${escapeHtml(meta.model_name || 'unknown-model')}</span>`,
+          `<span class="pill">${escapeHtml(modeLabelMap[mode] || `mode: ${mode}`)}</span>`,
+          `<span class="pill">${escapeHtml(activePrompt ? activePrompt.label : 'no-active-prompt')}</span>`,
+          `<span class="pill">${repoCount} 个仓库</span>`,
+          `<span class="pill">view: ${escapeHtml(dashboardState.activeView || 'workspace')}</span>`,
+          `<span class="pill ${dashboardState.streamStatus === 'fallback' ? 'warn' : ''}">${escapeHtml(streamLabel)}</span>`,
+        ].join('');
+      }
+
+      function renderWorkflowOptions(meta) {
+        const select = document.getElementById('composer-workflow');
+        const currentValue = select.value;
+        const workflowNames = Object.keys((meta && meta.workflows) || {});
+        select.innerHTML = [
+          `<option value="">manual / 不指定</option>`,
+          ...workflowNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`),
+        ].join('');
+        if (workflowNames.includes(currentValue)) {
+          select.value = currentValue;
+          return;
+        }
+        if (workflowNames.includes('full_iteration')) {
+          select.value = 'full_iteration';
+        }
+      }
+
+      function renderExecutionModeOptions(meta) {
+        const select = document.getElementById('composer-execution-mode');
+        const currentValue = select.value || 'validate';
+        const modes = (meta && meta.execution_modes) || ['off', 'status', 'build', 'test', 'validate'];
+        select.innerHTML = modes.map((mode) => `<option value="${escapeHtml(mode)}">${escapeHtml(mode)}</option>`).join('');
+        if (modes.includes(currentValue)) {
+          select.value = currentValue;
+          return;
+        }
+        select.value = modes.includes('validate') ? 'validate' : (modes[0] || 'off');
+      }
+
+      function renderRepoSelector(items) {
+        const root = document.getElementById('composer-repos');
+        const selected = new Set(
+          Array.from(root.querySelectorAll('input[type="checkbox"]:checked')).map((item) => item.value)
+        );
+        root.innerHTML = items.map((item) => `
+          <label class="checkbox-chip">
+            <input type="checkbox" value="${item.name}" ${selected.has(item.name) ? 'checked' : ''} />
+            <span>${item.name}</span>
+            <span class="muted">(${item.exists ? item.branch || item.current_branch || 'ready' : 'missing'})</span>
+          </label>
+        `).join('');
+      }
+
+      function renderComposerPresets(meta) {
+        const root = document.getElementById('composer-presets');
+        const presets = [
+          {
+            label: '启动前后端项目',
+            task: '请启动当前前后端项目，并告诉我启动是否成功、哪些命令被执行、日志里有没有明显阻断。',
+            workflow: '',
+            executionMode: 'start',
+            repos: ['backend', 'frontend'],
+          },
+          {
+            label: '关闭前后端项目',
+            action: 'stop-runtime',
+            repos: ['backend', 'frontend'],
+            warn: true,
+          },
+        ];
+        root.innerHTML = presets.map((item) => `
+          <button
+            class="button ${item.warn ? 'warn' : ''}"
+            data-preset-task="${escapeAttribute(item.task || '')}"
+            data-preset-action="${escapeAttribute(item.action || '')}"
+            data-preset-workflow="${escapeAttribute(item.workflow || '')}"
+            data-preset-mode="${escapeAttribute(item.executionMode || '')}"
+            data-preset-repos="${escapeAttribute(item.repos.join(','))}"
+          >
+            ${item.label}
+          </button>
+        `).join('');
+
+        root.querySelectorAll('[data-preset-task], [data-preset-action]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            const action = button.dataset.presetAction || '';
+            if (action === 'stop-runtime') {
+              const selectedRepos = (button.dataset.presetRepos || '').split(',').filter(Boolean);
+              const targetLabel = selectedRepos.length ? selectedRepos.join(' + ') : '运行进程';
+              await stopRuntimeProcesses({ repo_names: selectedRepos }, targetLabel);
+              return;
+            }
+            document.getElementById('composer-task').value = button.dataset.presetTask || '';
+            document.getElementById('composer-context').value = '';
+            document.getElementById('composer-expected-output').value = '希望直接改代码，并在完成后说明验证结果。';
+            if (button.dataset.presetWorkflow && ((meta && meta.workflows) || {})[button.dataset.presetWorkflow]) {
+              document.getElementById('composer-workflow').value = button.dataset.presetWorkflow;
+            }
+            document.getElementById('composer-execution-mode').value = button.dataset.presetMode || 'off';
+            const selectedRepos = new Set((button.dataset.presetRepos || '').split(',').filter(Boolean));
+            document.querySelectorAll('#composer-repos input[type="checkbox"]').forEach((input) => {
+              input.checked = selectedRepos.has(input.value);
+            });
+            setComposerStatus(`已套用预设：${button.textContent.trim()}`);
+          });
+        });
+      }
+
+      function renderConversationThread() {
+        const root = document.getElementById('conversation-thread');
+        const previousScrollTop = root.scrollTop;
+        const previousScrollHeight = root.scrollHeight;
+        const messages = dashboardState.conversationMessages || [];
+        if (!messages.length) {
+          root.innerHTML = `<div class="empty-state">这里会显示你的追问历史和 Agent 的反馈摘要。发送第一条消息后，后续可以继续沿用上下文。</div>`;
+          return;
+        }
+        const total = messages.length;
+        const visibleCount = Math.max(8, Number(dashboardState.conversationVisibleCount || 24));
+        const start = Math.max(0, total - visibleCount);
+        const visibleMessages = messages.slice(start);
+        const hiddenCount = start;
+
+        root.innerHTML = `
+          ${hiddenCount
+            ? `<div class="list-window-toolbar">
+                 <span class="muted">仅渲染最近 ${visibleMessages.length} / ${total} 条，已折叠 ${hiddenCount} 条历史消息</span>
+                 <button class="button" data-conversation-more="1">加载更早消息</button>
+               </div>`
+            : ''
+          }
+          ${visibleMessages.map((item) => `
+          <div class="message ${item.role === 'user' ? 'user' : 'assistant'}">
+            <div class="message-meta">
+              <div class="row" style="justify-content:flex-start;">
+                <strong>${item.role === 'user' ? '你' : 'Agent'}</strong>
+                ${item.status ? `<span class="pill ${isWarnTaskStatus(item.status) ? 'warn' : ''}">${escapeHtml(item.pending ? `${item.status} · 执行中` : item.status)}</span>` : ''}
+                ${item.workflow ? `<span class="pill">${escapeHtml(item.workflow)}</span>` : ''}
+              </div>
+              <span>${escapeHtml(item.createdAt || '')}</span>
+            </div>
+            ${item.taskId ? `
+              <div class="actions" style="margin-top:0;margin-bottom:10px;">
+                <button class="button" data-jump-task="${item.taskId}">查看任务详情弹窗</button>
+              </div>
+            ` : ''}
+            <div class="message-body">${renderMarkdown(item.content, { truncate: 1200 })}</div>
+            ${item.taskId ? `<div class="muted" style="margin-top:8px;">正文只展示摘要，完整执行链路请点上方“查看任务详情弹窗”。</div>` : ''}
+            ${item.usedAgents && item.usedAgents.length ? `<div class="muted" style="margin-top:10px;">agents: <code>${escapeHtml(item.usedAgents.join(', '))}</code></div>` : ''}
+            ${item.usedSkills && item.usedSkills.length ? `<div class="muted" style="margin-top:6px;">skills: <code>${escapeHtml(item.usedSkills.join(', '))}</code></div>` : ''}
+          </div>
+        `).join('')}
+        `;
+
+        root.querySelectorAll('[data-conversation-more]').forEach((button) => {
+          button.addEventListener('click', () => {
+            dashboardState.conversationVisibleCount = Math.min(total, visibleCount + 20);
+            renderConversationThread();
+          });
+        });
+
+        root.querySelectorAll('[data-jump-task]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await openTaskDetailModal(button.dataset.jumpTask);
+          });
+        });
+        if (dashboardState.conversationAutoScroll) {
+          root.scrollTop = root.scrollHeight;
+          return;
+        }
+        const heightDelta = root.scrollHeight - previousScrollHeight;
+        root.scrollTop = Math.max(0, previousScrollTop + heightDelta);
+      }
+
+      function renderLatestFeedback() {
+        const root = document.getElementById('latest-feedback');
+        const detail = dashboardState.activeTaskDetail;
+        const response = dashboardState.activeResponse || (detail ? detail.response || null : null);
+        const latestEvent = detail && detail.events && detail.events.length
+          ? detail.events[detail.events.length - 1]
+          : null;
+        if (!response && !detail) {
+          root.innerHTML = `
+            <div class="feedback-card">
+              <h3>本轮反馈概览</h3>
+              <div class="empty-state">发送消息后，这里会展示状态、执行模式、使用到的 Agent / Skill，以及本轮摘要。</div>
+            </div>
+            <div class="feedback-card">
+              <h3>建议下一步</h3>
+              <div class="empty-state">一旦本轮有阻断或自动建议，这里会优先显示你最该继续追问或执行的方向。</div>
+            </div>
+          `;
+          return;
+        }
+
+        const preview = truncateText((response && response.content) || (detail && detail.stream_preview) || '', 560);
+        const recommendationCount = ((response && response.execution_recommendations) || []).length;
+        const workflow = (response && response.workflow) || (detail && detail.workflow) || 'manual';
+        const status = (response && response.status) || (detail && detail.status) || 'planned';
+        const executionMode = (response && response.execution_mode) || (detail && detail.execution && detail.execution.mode) || 'off';
+        const usedAgents = (response && response.used_agents) || [];
+        const usedSkills = (response && response.used_skills) || [];
+        const repos = (response && response.repos) || (detail && detail.execution && detail.execution.repo_names) || [];
+        const stepCount = ((response && response.steps) || (detail && detail.plan && detail.plan.steps) || []).length;
+        const handoffCount = ((response && response.handoffs) || (detail && detail.handoffs) || []).length;
+        root.innerHTML = `
+          <div class="feedback-card">
+            <h3>本轮反馈概览</h3>
+            <div class="detail-list">
+              <div class="row">
+                <strong>${escapeHtml(workflow)}</strong>
+                <span class="pill ${isWarnTaskStatus(status) ? 'warn' : ''}">${escapeHtml(status)}</span>
+              </div>
+              <div class="muted">model: <code>${escapeHtml((response && response.model) || '-')}</code></div>
+              <div class="muted">execution_mode: <code>${escapeHtml(executionMode)}</code></div>
+              <div class="muted">agents: <code>${escapeHtml(usedAgents.join(', ') || '-')}</code></div>
+              <div class="muted">skills: <code>${escapeHtml(usedSkills.join(', ') || '-')}</code></div>
+              <div class="muted">repos: <code>${escapeHtml(repos.join(', ') || 'auto')}</code></div>
+              <div class="muted">steps / handoffs / 建议: <code>${stepCount} / ${handoffCount} / ${recommendationCount}</code></div>
+              ${detail && detail.task_id ? `<div class="actions"><button class="button" data-jump-latest-task="${detail.task_id}">弹窗查看本轮任务</button></div>` : ''}
+            </div>
+          </div>
+          <div class="feedback-card">
+            <h3>${response && response.content ? '本轮回复摘录' : '执行中反馈'}</h3>
+            <div class="content-body">${renderMarkdown(preview || formatRunningSummary(detail, latestEvent), { truncate: 1200 })}</div>
+            ${latestEvent ? `<div class="muted" style="margin-top:10px;">最近事件: <code>${escapeHtml(latestEvent.event_type || '-')}</code> @ ${escapeHtml(latestEvent.created_at || '')}</div>` : ''}
+          </div>
+        `;
+
+        root.querySelectorAll('[data-jump-latest-task]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await openTaskDetailModal(button.dataset.jumpLatestTask);
+          });
+        });
+      }
+
+      function formatRunningSummary(detail, latestEvent) {
+        if (!detail) return '暂无任务运行信息。';
+        const lines = [
+          `任务状态: ${detail.status || 'planned'}`,
+          `workflow: ${detail.workflow || 'manual'}`,
+        ];
+        if (detail.live_agent) {
+          lines.push(`当前 Agent: ${detail.live_agent}`);
+        }
+        const execution = detail.execution || {};
+        if ((execution.repo_names || []).length) {
+          lines.push(`作用仓库: ${(execution.repo_names || []).join(', ')}`);
+        }
+        if (detail.stream_preview) {
+          lines.push('');
+          lines.push('实时输出:');
+          lines.push(truncateText(detail.stream_preview, 360));
+        }
+        if (latestEvent) {
+          lines.push(`最近事件: ${latestEvent.event_type || '-'}`);
+        }
+        return lines.join('\n');
+      }
+
+      function renderReadinessPanel(meta) {
+        const root = document.getElementById('readiness-panel');
+        const activePrompt = (dashboardState.promptItems || []).find((item) => item.is_active);
+        const repos = dashboardState.repoItems || [];
+        const existingRepos = repos.filter((item) => item.exists);
+        const importedPlugins = (dashboardState.plugins || []).filter((item) => item.kind === 'github' && item.enabled);
+        const workspace = (meta && meta.workspace) || {};
+        const modelCheckStatus = dashboardState.modelCheckStatus;
+        const modelInfo = (() => {
+          if (modelCheckStatus === 'loading') {
+            return { title: '模型连通性', label: '检测中', warn: false, detail: '正在执行 smoke test。' };
+          }
+          if (modelCheckStatus === 'success') {
+            const availableModels = ((dashboardState.modelCheck || {}).available_models || []).length;
+            return {
+              title: '模型连通性',
+              label: '已通过',
+              warn: false,
+              detail: `${dashboardState.modelCheck.provider || meta.model_provider} / ${dashboardState.modelCheck.model || meta.model_name}，可见模型 ${availableModels} 个。`,
+            };
+          }
+          if (modelCheckStatus === 'error') {
+            return {
+              title: '模型连通性',
+              label: '需处理',
+              warn: true,
+              detail: String((dashboardState.modelCheck || {}).error || '模型检查失败，请点击“检测模型”查看。'),
+            };
+          }
+          return {
+            title: '模型连通性',
+            label: '未检测',
+            warn: true,
+            detail: '建议在首次发布任务前跑一次模型连通性检查。',
+          };
+        })();
+
+        const items = [
+          {
+            title: 'Prompt 状态',
+            label: activePrompt ? '已激活' : '未就绪',
+            warn: !activePrompt,
+            detail: activePrompt ? `${activePrompt.label} / ${activePrompt.title}` : '尚未找到 active prompt。',
+          },
+          {
+            title: '仓库识别',
+            label: `${existingRepos.length}/${repos.length} ready`,
+            warn: existingRepos.length !== repos.length,
+            detail: repos.length
+              ? repos.map((item) => `${item.name}:${item.exists ? 'ok' : 'missing'}`).join(' | ')
+              : '未配置工作区仓库。',
+          },
+          {
+            title: 'Git 凭据',
+            label: workspace.has_git_credentials ? '可同步私有仓库' : '未配置',
+            warn: !workspace.has_git_credentials,
+            detail: workspace.has_git_credentials
+              ? 'workspace secrets 已包含 Git 账号信息。'
+              : '如果要自动同步私有仓库，建议补齐 workspace-secrets.local.json。',
+          },
+          {
+            title: '服务基线',
+            label: `${(workspace.services || []).length} 项`,
+            warn: !(workspace.services || []).length,
+            detail: (workspace.services || []).length
+              ? (workspace.services || []).map((item) => `${item.name}:${item.host}:${item.port}`).join(' | ')
+              : '尚未配置服务地址。',
+          },
+          {
+            title: 'GitHub Skills',
+            label: `${importedPlugins.length} 个插件`,
+            warn: !importedPlugins.length,
+            detail: importedPlugins.length
+              ? importedPlugins.map((item) => `${item.name}(${item.skills.length})`).join(' | ')
+              : '当前没有启用 GitHub 导入插件。',
+          },
+          modelInfo,
+        ];
+
+        root.innerHTML = items.map((item) => `
+          <div class="insight-item">
+            <div class="row">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span class="pill ${item.warn ? 'warn' : ''}">${escapeHtml(item.label)}</span>
+            </div>
+            <div class="muted">${escapeHtml(item.detail)}</div>
+          </div>
+        `).join('');
+      }
+
+      function renderFlowAudit(meta) {
+        const root = document.getElementById('flow-audit-panel');
+        const workflows = (meta && meta.workflows) || {};
+        const skillNames = new Set(Object.keys((meta && meta.skills) || {}));
+        const agents = Object.keys((meta && meta.agents) || {});
+        const repos = dashboardState.repoItems || [];
+
+        const checks = [
+          {
+            title: '1. 启动当前服务',
+            ok: repos.some((item) => item.name === 'backend' && item.exists) && repos.some((item) => item.name === 'frontend' && item.exists),
+            detail: '前后端仓库都已登记在 workspace-profile 中，启动入口清晰。',
+          },
+          {
+            title: '2. 测试 Agent / 模型链接',
+            ok: dashboardState.modelCheckStatus === 'success',
+            detail: dashboardState.modelCheckStatus === 'success'
+              ? '模型 smoke test 已通过，可以直接发布任务。'
+              : '模型检查还未完成或失败，建议先执行一次“检测模型”。',
+          },
+          {
+            title: '3. 发布任务与工作流路由',
+            ok: Object.keys(workflows).length >= 6,
+            detail: `当前有 ${Object.keys(workflows).length} 个 workflow，可覆盖前端增强、后端 TDD、质量审计和上线前联查。`,
+          },
+          {
+            title: '4. 各 Agent 各司其职',
+            ok: ['orchestrator', 'backend', 'frontend', 'ops'].every((item) => agents.includes(item)),
+            detail: `当前 Agent: ${agents.join(', ') || 'none'}`,
+          },
+          {
+            title: '5. Skill 调用与补强',
+            ok: ['frontend-skill', 'playwright', 'tdd', 'coverage-analysis', 'differential-review', 'gh-fix-ci'].every((item) => skillNames.has(item)),
+            detail: '常见的 GitHub 强化技能已经进入 merged skill 集合，可被 workflow 调用。',
+          },
+          {
+            title: '6. 测试、覆盖率与验收',
+            ok: ['BackendTestSkill', 'FrontendTestSkill', 'playwright', 'coverage-analysis', 'codeql', 'semgrep'].every((item) => skillNames.has(item)),
+            detail: '后端测试、前端回归、浏览器验收、覆盖率和静态分析链路都已经具备。',
+          },
+        ];
+
+        root.innerHTML = checks.map((item) => `
+          <div class="insight-item">
+            <div class="row">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span class="pill ${item.ok ? '' : 'warn'}">${item.ok ? '顺畅' : '待补'} </span>
+            </div>
+            <div class="muted">${escapeHtml(item.detail)}</div>
+          </div>
+        `).join('');
+      }
+
+      function renderGitHubSkills(meta) {
+        const root = document.getElementById('github-skills-panel');
+        const workflows = (meta && meta.workflows) || {};
+        const plugins = (dashboardState.plugins || []).filter((item) => item.kind === 'github' && item.enabled);
+        if (!plugins.length) {
+          root.innerHTML = `<div class="empty-state">当前没有已启用的 GitHub 技能插件。</div>`;
+          return;
+        }
+
+        root.innerHTML = plugins.map((plugin) => {
+          const linkedWorkflows = Object.entries(workflows)
+            .filter(([, config]) => (config.skills || []).some((skill) => (plugin.skills || []).includes(skill)))
+            .map(([name]) => name);
+          return `
+            <div class="insight-item">
+              <div class="row">
+                <strong>${escapeHtml(plugin.name)}</strong>
+                <span class="pill ${linkedWorkflows.length ? '' : 'warn'}">${linkedWorkflows.length ? '已接入' : '仅导入未使用'}</span>
+              </div>
+              <div class="muted">来源: <code>${escapeHtml(plugin.repo || plugin.source_url || '-')}</code> @ <code>${escapeHtml(plugin.ref || 'main')}</code></div>
+              <div class="muted">owner_agent: <code>${escapeHtml(plugin.owner_agent || 'auto')}</code></div>
+              <div class="muted">skills: <code>${escapeHtml((plugin.skills || []).slice(0, 6).join(', '))}${(plugin.skills || []).length > 6 ? ' ...' : ''}</code></div>
+              <div class="muted">workflow: <code>${escapeHtml(linkedWorkflows.join(', ') || '未绑定')}</code></div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function modelModeLabel(mode) {
+        if (mode === 'dev') return '低负载(dev)';
+        if (mode === 'hq') return '高质量(hq)';
+        return String(mode || 'custom');
+      }
+
+      function renderModelModePanel() {
+        const root = document.getElementById('model-mode-panel');
+        if (!root) return;
+        const status = dashboardState.modelModeStatus;
+        const modeData = dashboardState.modelMode || {};
+        const mode = String(modeData.mode || 'unknown').toLowerCase();
+        const switching = !!dashboardState.modelModeSwitching;
+
+        if (status === 'loading' && !modeData.model_name) {
+          root.innerHTML = `<div class="insight-item"><div class="muted">正在读取当前模型模式...</div></div>`;
+          return;
+        }
+
+        if (status === 'error') {
+          root.innerHTML = `
+            <div class="insight-item">
+              <div class="row">
+                <strong>模式读取失败</strong>
+                <span class="pill warn">需处理</span>
+              </div>
+              <div class="muted">${escapeHtml(String(modeData.error || '未获取到模式信息'))}</div>
+              <div class="actions">
+                <button class="button" id="reload-model-mode">重试读取</button>
+              </div>
+            </div>
+          `;
+          const retryButton = document.getElementById('reload-model-mode');
+          if (retryButton) {
+            retryButton.addEventListener('click', async () => {
+              await loadModelMode();
+            });
+          }
+          return;
+        }
+
+        const currentModel = modeData.model_name || '-';
+        const devModel = modeData.model_name_dev || '-';
+        const hqModel = modeData.model_name_hq || '-';
+        root.innerHTML = `
+          <div class="insight-item">
+            <div class="row">
+              <strong>当前模式</strong>
+              <span class="pill ${mode === 'hq' ? '' : 'warn'}">${escapeHtml(modelModeLabel(mode))}</span>
+            </div>
+            <div class="muted">当前模型: <code>${escapeHtml(currentModel)}</code></div>
+            <div class="muted">低负载模型: <code>${escapeHtml(devModel)}</code></div>
+            <div class="muted">高质量模型: <code>${escapeHtml(hqModel)}</code></div>
+            <div class="actions">
+              <button class="button ${mode === 'dev' ? 'warn' : ''}" data-switch-model-mode="dev" ${switching || mode === 'dev' ? 'disabled' : ''}>切到低负载(dev)</button>
+              <button class="button ${mode === 'hq' ? 'warn' : ''}" data-switch-model-mode="hq" ${switching || mode === 'hq' ? 'disabled' : ''}>切到高质量(hq)</button>
+            </div>
+            <div class="hint">切换会同时更新 <code>.env</code> 和当前运行时模型，新任务会立即生效。</div>
+          </div>
+        `;
+        root.querySelectorAll('[data-switch-model-mode]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await switchModelMode(button.dataset.switchModelMode);
+          });
+        });
+      }
+
+      async function loadModelMode() {
+        dashboardState.modelModeStatus = 'loading';
+        renderModelModePanel();
+        try {
+          dashboardState.modelMode = await loadJson('/api/v1/model/mode');
+          dashboardState.modelModeStatus = 'success';
+          if (dashboardState.meta) {
+            dashboardState.meta.model_name = dashboardState.modelMode.model_name || dashboardState.meta.model_name;
+          }
+        } catch (error) {
+          dashboardState.modelMode = { error: String(error) };
+          dashboardState.modelModeStatus = 'error';
+        }
+        renderModelModePanel();
+        if (dashboardState.meta) {
+          renderRuntimeStrip(dashboardState.meta);
+        }
+      }
+
+      async function switchModelMode(mode) {
+        const targetMode = String(mode || '').trim().toLowerCase();
+        if (!['dev', 'hq'].includes(targetMode)) {
+          setComposerStatus(`不支持的模型模式：${targetMode}`, true);
+          return;
+        }
+        if (dashboardState.modelModeSwitching) {
+          return;
+        }
+        dashboardState.modelModeSwitching = true;
+        renderModelModePanel();
+        setComposerStatus(`正在切换模型模式到 ${modelModeLabel(targetMode)} ...`);
+        try {
+          dashboardState.modelMode = await postJson('/api/v1/model/mode', { mode: targetMode });
+          dashboardState.modelModeStatus = 'success';
+          if (dashboardState.meta) {
+            dashboardState.meta.model_name = dashboardState.modelMode.model_name || dashboardState.meta.model_name;
+            renderRuntimeStrip(dashboardState.meta);
+          }
+          dashboardState.modelCheckStatus = 'idle';
+          renderReadinessPanel(dashboardState.meta || {});
+          renderFlowAudit(dashboardState.meta || {});
+          setComposerStatus(`模型模式已切换：${modelModeLabel(targetMode)} / ${dashboardState.modelMode.model_name}`);
+        } catch (error) {
+          dashboardState.modelModeStatus = 'error';
+          dashboardState.modelMode = { error: String(error) };
+          setComposerStatus(`模型模式切换失败：${String(error)}`, true);
+        } finally {
+          dashboardState.modelModeSwitching = false;
+          renderModelModePanel();
+        }
+      }
+
+      function summarizeBugTriageConfig(config) {
+        const keywordSets = (config && config.keyword_sets) || {};
+        const taskCount = Array.isArray(keywordSets.task) ? keywordSets.task.length : 0;
+        const backendCount = Array.isArray(keywordSets.backend) ? keywordSets.backend.length : 0;
+        const frontendCount = Array.isArray(keywordSets.frontend) ? keywordSets.frontend.length : 0;
+        const opsCount = Array.isArray(keywordSets.ops) ? keywordSets.ops.length : 0;
+        const integrationCount = Array.isArray(keywordSets.integration) ? keywordSets.integration.length : 0;
+        return `task:${taskCount} / backend:${backendCount} / frontend:${frontendCount} / ops:${opsCount} / integration:${integrationCount}`;
+      }
+
+      function renderBugTriagePanel() {
+        const root = document.getElementById('bug-triage-panel');
+        if (!root) return;
+        const status = dashboardState.bugTriageStatus;
+        const data = dashboardState.bugTriage || {};
+        const saving = !!dashboardState.bugTriageSaving;
+
+        if (status === 'loading' && !dashboardState.bugTriageDraft) {
+          root.innerHTML = `<div class="insight-item"><div class="muted">正在加载 bug 分诊规则...</div></div>`;
+          return;
+        }
+
+        if (status === 'error') {
+          root.innerHTML = `
+            <div class="insight-item">
+              <div class="row">
+                <strong>规则读取失败</strong>
+                <span class="pill warn">需处理</span>
+              </div>
+              <div class="muted">${escapeHtml(String(data.error || '未知错误'))}</div>
+              <div class="actions">
+                <button class="button" id="reload-bug-triage-config">重试读取</button>
+              </div>
+            </div>
+          `;
+          const reloadButton = document.getElementById('reload-bug-triage-config');
+          if (reloadButton) {
+            reloadButton.addEventListener('click', async () => {
+              await loadBugTriageConfig();
+            });
+          }
+          return;
+        }
+
+        const config = data.config || {};
+        const configPath = data.path || ((dashboardState.meta || {}).bug_triage_config_path || '-');
+        const enabled = !!config.enabled;
+        const draft = dashboardState.bugTriageDraft || JSON.stringify(config, null, 2);
+
+        root.innerHTML = `
+          <div class="insight-item">
+            <div class="row">
+              <strong>当前状态</strong>
+              <span class="pill ${enabled ? '' : 'warn'}">${enabled ? 'enabled' : 'disabled'}</span>
+            </div>
+            <div class="muted">配置文件: <code>${escapeHtml(String(configPath))}</code></div>
+            <div class="muted">关键词规模: ${escapeHtml(summarizeBugTriageConfig(config))}</div>
+            <label class="field" style="margin-top:12px;">
+              <span class="field-title">规则 JSON</span>
+              <textarea id="bug-triage-config-editor" style="min-height:240px;">${escapeHtml(draft)}</textarea>
+            </label>
+            <div class="actions">
+              <button class="button warn" id="save-bug-triage-config" ${saving ? 'disabled' : ''}>保存规则</button>
+              <button class="button" id="reload-bug-triage-config-inline" ${saving ? 'disabled' : ''}>重新读取</button>
+              <button class="button" id="reset-bug-triage-config" ${saving ? 'disabled' : ''}>恢复默认</button>
+            </div>
+            <div class="hint">保存后无需重启，后续新任务会立即使用最新 bug 分诊规则。</div>
+          </div>
+        `;
+
+        const editor = document.getElementById('bug-triage-config-editor');
+        if (editor) {
+          editor.addEventListener('input', (event) => {
+            dashboardState.bugTriageDraft = event.target.value || '';
+          });
+        }
+        const saveButton = document.getElementById('save-bug-triage-config');
+        if (saveButton) {
+          saveButton.addEventListener('click', async () => {
+            await saveBugTriageConfig();
+          });
+        }
+        const reloadButton = document.getElementById('reload-bug-triage-config-inline');
+        if (reloadButton) {
+          reloadButton.addEventListener('click', async () => {
+            await loadBugTriageConfig();
+          });
+        }
+        const resetButton = document.getElementById('reset-bug-triage-config');
+        if (resetButton) {
+          resetButton.addEventListener('click', async () => {
+            await resetBugTriageConfig();
+          });
+        }
+      }
+
+      async function loadBugTriageConfig() {
+        dashboardState.bugTriageStatus = 'loading';
+        renderBugTriagePanel();
+        try {
+          const payload = await loadJson('/api/v1/bug-triage/config');
+          dashboardState.bugTriage = payload;
+          dashboardState.bugTriageStatus = 'success';
+          dashboardState.bugTriageDraft = JSON.stringify(payload.config || {}, null, 2);
+        } catch (error) {
+          dashboardState.bugTriage = { error: String(error) };
+          dashboardState.bugTriageStatus = 'error';
+        }
+        renderBugTriagePanel();
+      }
+
+      async function saveBugTriageConfig() {
+        if (dashboardState.bugTriageSaving) return;
+        let parsed = null;
+        try {
+          parsed = JSON.parse(dashboardState.bugTriageDraft || '{}');
+        } catch (error) {
+          setComposerStatus(`规则 JSON 解析失败：${String(error)}`, true);
+          return;
+        }
+        dashboardState.bugTriageSaving = true;
+        renderBugTriagePanel();
+        try {
+          const payload = await postJson('/api/v1/bug-triage/config', { config: parsed });
+          dashboardState.bugTriage = payload;
+          dashboardState.bugTriageStatus = 'success';
+          dashboardState.bugTriageDraft = JSON.stringify(payload.config || {}, null, 2);
+          if (dashboardState.meta) {
+            dashboardState.meta.bug_triage_config_path = payload.path || dashboardState.meta.bug_triage_config_path;
+          }
+          setComposerStatus('Bug 分诊规则已保存，新任务会立即应用。');
+        } catch (error) {
+          dashboardState.bugTriageStatus = 'error';
+          dashboardState.bugTriage = { error: String(error) };
+          setComposerStatus(`保存 bug 分诊规则失败：${String(error)}`, true);
+        } finally {
+          dashboardState.bugTriageSaving = false;
+          renderBugTriagePanel();
+        }
+      }
+
+      async function resetBugTriageConfig() {
+        if (dashboardState.bugTriageSaving) return;
+        dashboardState.bugTriageSaving = true;
+        renderBugTriagePanel();
+        try {
+          const payload = await postJson('/api/v1/bug-triage/config', { reset: true });
+          dashboardState.bugTriage = payload;
+          dashboardState.bugTriageStatus = 'success';
+          dashboardState.bugTriageDraft = JSON.stringify(payload.config || {}, null, 2);
+          if (dashboardState.meta) {
+            dashboardState.meta.bug_triage_config_path = payload.path || dashboardState.meta.bug_triage_config_path;
+          }
+          setComposerStatus('Bug 分诊规则已恢复默认。');
+        } catch (error) {
+          dashboardState.bugTriageStatus = 'error';
+          dashboardState.bugTriage = { error: String(error) };
+          setComposerStatus(`恢复默认规则失败：${String(error)}`, true);
+        } finally {
+          dashboardState.bugTriageSaving = false;
+          renderBugTriagePanel();
+        }
+      }
+
+      async function runModelCheck() {
+        dashboardState.modelCheckStatus = 'loading';
+        renderReadinessPanel(dashboardState.meta || {});
+        try {
+          dashboardState.modelCheck = await loadJson('/api/v1/model/check');
+          dashboardState.modelCheckStatus = 'success';
+        } catch (error) {
+          dashboardState.modelCheck = { error: String(error) };
+          dashboardState.modelCheckStatus = 'error';
+        }
+        renderReadinessPanel(dashboardState.meta || {});
+        renderFlowAudit(dashboardState.meta || {});
+      }
+
+      async function reloadRuntimeConfig() {
+        setComposerStatus('正在重载运行时配置...');
+        try {
+          await postJson('/api/v1/prompts/reload', {});
+          await boot(dashboardState.selectedTaskId);
+          setComposerStatus('配置已重载，后续任务将使用最新 workspace/profile。');
+        } catch (error) {
+          setComposerStatus(`重载配置失败：${String(error)}`, true);
+        }
+      }
+
+      function defaultVersionLabel() {
+        const activePrompt = (dashboardState.promptItems || []).find((item) => item.is_active);
+        return activePrompt ? activePrompt.label : 'v1.0.0';
+      }
+
+      function isTerminalTaskStatus(status) {
+        return ['completed', 'failed', 'blocked', 'canceled'].includes(status || '');
+      }
+
+      function isWarnTaskStatus(status) {
+        return ['failed', 'blocked', 'canceled'].includes(status || '');
+      }
+
+      function clearTaskPolling() {
+        if (dashboardState.pollingHandle) {
+          window.clearTimeout(dashboardState.pollingHandle);
+        }
+        dashboardState.pollingHandle = null;
+        dashboardState.pollingTaskId = null;
+      }
+
+      function clearTaskStream() {
+        if (dashboardState.streamSource) {
+          dashboardState.streamSource.close();
+        }
+        dashboardState.streamSource = null;
+        dashboardState.streamTaskId = null;
+        dashboardState.streamLastEventId = 0;
+        if (dashboardState.streamStatus !== 'fallback') {
+          dashboardState.streamStatus = 'idle';
+        }
+        if (dashboardState.meta) {
+          renderRuntimeStrip(dashboardState.meta);
+        }
+      }
+
+      function normalizePlanSteps(detail) {
+        if (!detail.plan || !Array.isArray(detail.plan.steps)) {
+          detail.plan = detail.plan || {};
+          detail.plan.steps = [];
+        }
+        return detail.plan.steps;
+      }
+
+      function upsertStepFromEvent(detail, payload = {}) {
+        const steps = normalizePlanSteps(detail);
+        const agent = payload.agent || '';
+        const title = payload.title || '';
+        let target = null;
+        if (typeof payload.step_index === 'number' && steps[payload.step_index]) {
+          target = steps[payload.step_index];
+        } else {
+          target = steps.find((item) => item.agent === agent && item.title === title) || null;
+        }
+        if (!target) {
+          target = {
+            agent,
+            title,
+            skills: payload.skills || [],
+            status: 'running',
+            output: '',
+          };
+          steps.push(target);
+        }
+        if (Array.isArray(payload.skills) && payload.skills.length) {
+          target.skills = payload.skills;
+        }
+        return target;
+      }
+
+      function applyTaskEvent(taskId, event) {
+        const detail = dashboardState.taskDetails[taskId] || {
+          task_id: taskId,
+          workflow: 'manual',
+          status: 'planned',
+          version: '',
+          task: '',
+          response: {},
+          events: [],
+        };
+        if (!dashboardState.taskDetails[taskId]) {
+          dashboardState.taskDetails[taskId] = detail;
+        }
+        detail.events = detail.events || [];
+        detail.events.push(event);
+        detail.updated_at = event.created_at || detail.updated_at;
+
+        const payload = event.payload || {};
+        if (event.event_type === 'task_started') {
+          detail.status = 'running';
+        }
+        if (event.event_type === 'agent_step_started') {
+          detail.status = 'running';
+          detail.live_agent = payload.agent || '';
+          const step = upsertStepFromEvent(detail, payload);
+          step.status = 'running';
+        }
+        if (event.event_type === 'agent_step_delta') {
+          detail.status = 'running';
+          const step = upsertStepFromEvent(detail, payload);
+          step.status = 'running';
+          step.output = `${step.output || ''}${payload.delta || ''}`;
+          detail.stream_preview = `${detail.stream_preview || ''}${payload.delta || ''}`;
+          detail.live_agent = payload.agent || detail.live_agent || '';
+        }
+        if (event.event_type === 'agent_step_completed') {
+          const step = upsertStepFromEvent(detail, payload);
+          step.status = 'completed';
+        }
+        if (event.event_type === 'task_completed') {
+          detail.status = 'completed';
+        }
+        if (event.event_type === 'task_blocked') {
+          detail.status = 'blocked';
+        }
+        if (event.event_type === 'task_failed') {
+          detail.status = 'failed';
+        }
+        if (event.event_type === 'task_canceled') {
+          detail.status = 'canceled';
+        }
+
+        if (dashboardState.activeTaskDetail && dashboardState.activeTaskDetail.task_id === taskId) {
+          dashboardState.activeTaskDetail = detail;
+        }
+        syncTaskItemWithDetail(detail);
+        scheduleLiveRender(taskId);
+      }
+
+      function scheduleLiveRender(taskId) {
+        if (dashboardState.liveRenderScheduled) {
+          return;
+        }
+        dashboardState.liveRenderScheduled = true;
+        window.requestAnimationFrame(() => {
+          dashboardState.liveRenderScheduled = false;
+          renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+          const detail = dashboardState.taskDetails[taskId];
+          if (detail && dashboardState.selectedTaskId === taskId) {
+            renderTaskDetail(detail);
+          }
+          if (detail) {
+            upsertConversationTaskMessage(detail);
+          }
+          renderLatestFeedback();
+        });
+      }
+
+      function startTaskStream(taskId) {
+        if (typeof window.EventSource !== 'function') {
+          return false;
+        }
+        clearTaskPolling();
+        if (dashboardState.streamTaskId === taskId && dashboardState.streamSource) {
+          return true;
+        }
+        clearTaskStream();
+
+        const detail = dashboardState.taskDetails[taskId] || {};
+        const events = detail.events || [];
+        const lastKnown = events.length ? Number(events[events.length - 1].event_id || 0) : 0;
+        dashboardState.streamLastEventId = Number.isFinite(lastKnown) ? lastKnown : 0;
+        dashboardState.streamStatus = 'connecting';
+        renderRuntimeStrip(dashboardState.meta || {});
+
+        const source = new window.EventSource(
+          `/api/v1/tasks/${encodeURIComponent(taskId)}/stream?last_event_id=${dashboardState.streamLastEventId}`
+        );
+        dashboardState.streamSource = source;
+        dashboardState.streamTaskId = taskId;
+        let opened = false;
+        const bootTimeout = window.setTimeout(() => {
+          if (opened) return;
+          source.close();
+          dashboardState.streamStatus = 'fallback';
+          renderRuntimeStrip(dashboardState.meta || {});
+          pollTaskProgress(taskId).catch((error) => {
+            console.warn('pollTaskProgress failed', error);
+          });
+        }, 2800);
+
+        source.addEventListener('open', () => {
+          opened = true;
+          window.clearTimeout(bootTimeout);
+          dashboardState.streamStatus = 'live';
+          renderRuntimeStrip(dashboardState.meta || {});
+          setComposerStatus(`流式连接已建立，task_id=${taskId}`);
+        });
+
+        source.addEventListener('task_event', (message) => {
+          let event = null;
+          try {
+            event = JSON.parse(message.data || '{}');
+          } catch (error) {
+            return;
+          }
+          if (!event || !event.task_id) {
+            return;
+          }
+          dashboardState.streamLastEventId = Number(event.event_id || dashboardState.streamLastEventId || 0);
+          applyTaskEvent(taskId, event);
+        });
+
+        source.addEventListener('task_terminal', async (message) => {
+          let terminal = null;
+          try {
+            terminal = JSON.parse(message.data || '{}');
+          } catch (error) {
+            terminal = null;
+          }
+          source.close();
+          dashboardState.streamSource = null;
+          dashboardState.streamTaskId = null;
+          dashboardState.streamStatus = 'idle';
+          renderRuntimeStrip(dashboardState.meta || {});
+          if (terminal && terminal.status) {
+            setComposerStatus(`任务已结束，状态=${terminal.status}，task_id=${taskId}`, terminal.status !== 'completed');
+          }
+          await pollTaskProgress(taskId);
+        });
+
+        source.addEventListener('error', () => {
+          if (!opened) {
+            return;
+          }
+          if (dashboardState.streamStatus !== 'reconnecting') {
+            dashboardState.streamStatus = 'reconnecting';
+            renderRuntimeStrip(dashboardState.meta || {});
+          }
+        });
+        return true;
+      }
+
+      function syncTaskItemWithDetail(detail) {
+        const summary = {
+          task_id: detail.task_id,
+          status: detail.status,
+          workflow: detail.workflow,
+          version: detail.version,
+          task: detail.task,
+          created_at: detail.created_at,
+          updated_at: detail.updated_at,
+          used_agents: ((detail.response || {}).used_agents) || detail.used_agents || [],
+          used_skills: ((detail.response || {}).used_skills) || detail.used_skills || [],
+        };
+        const index = dashboardState.taskItems.findIndex((item) => item.task_id === detail.task_id);
+        if (index >= 0) {
+          dashboardState.taskItems.splice(index, 1, summary);
+        } else {
+          dashboardState.taskItems = [summary, ...dashboardState.taskItems];
+        }
+      }
+
+      function upsertConversationTaskMessage(detail) {
+        const messageIndex = dashboardState.conversationMessages.findIndex((item) => item.taskId === detail.task_id && item.role === 'assistant');
+        const latestEvent = detail.events && detail.events.length ? detail.events[detail.events.length - 1] : null;
+        const finalContent = ((detail.response || {}).content || '').trim();
+        const streamPreview = truncateText(detail.stream_preview || '', 900);
+        const content = finalContent || (streamPreview ? `实时输出预览:\n${streamPreview}` : formatRunningSummary(detail, latestEvent));
+        const payload = {
+          role: 'assistant',
+          content,
+          createdAt: new Date().toLocaleString('zh-CN'),
+          workflow: detail.workflow || 'manual',
+          status: detail.status,
+          taskId: detail.task_id,
+          usedAgents: ((detail.response || {}).used_agents) || [],
+          usedSkills: ((detail.response || {}).used_skills) || [],
+          pending: !isTerminalTaskStatus(detail.status),
+        };
+        if (messageIndex >= 0) {
+          dashboardState.conversationMessages.splice(messageIndex, 1, payload);
+        } else {
+          dashboardState.conversationMessages.push(payload);
+        }
+        persistConversation();
+        renderConversationThread();
+      }
+
+      async function pollTaskProgress(taskId, attempt = 0) {
+        if (dashboardState.streamTaskId === taskId && dashboardState.streamStatus === 'live') {
+          return;
+        }
+        try {
+          const detail = await loadJson(`/api/v1/tasks/${taskId}`);
+          dashboardState.taskDetails[taskId] = detail;
+          dashboardState.activeTaskDetail = detail;
+          dashboardState.activeResponse = detail.response || null;
+          syncTaskItemWithDetail(detail);
+          renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+          await preloadTimelineMeta(detail);
+          if (dashboardState.selectedTaskId === taskId) {
+            renderTaskDetail(detail);
+          }
+          upsertConversationTaskMessage(detail);
+          renderLatestFeedback();
+
+          if (isTerminalTaskStatus(detail.status)) {
+            clearTaskPolling();
+            if (dashboardState.streamTaskId === taskId) {
+              clearTaskStream();
+            }
+            setComposerStatus(`任务已结束，状态=${detail.status}，task_id=${taskId}`, detail.status !== 'completed');
+            await boot(taskId);
+            return;
+          }
+
+          dashboardState.pollingTaskId = taskId;
+          dashboardState.pollingHandle = window.setTimeout(() => {
+            pollTaskProgress(taskId).catch((error) => {
+              console.warn('pollTaskProgress failed', error);
+            });
+          }, 1200);
+        } catch (error) {
+          if (attempt >= 4) {
+            clearTaskPolling();
+            setComposerStatus(`任务轮询失败：${String(error)}`, true);
+            return;
+          }
+          dashboardState.pollingTaskId = taskId;
+          dashboardState.pollingHandle = window.setTimeout(() => {
+            pollTaskProgress(taskId, attempt + 1).catch((innerError) => {
+              console.warn('pollTaskProgress failed', innerError);
+            });
+          }, 1600);
+        }
+      }
+
+      function ensureComposerDefaults() {
+        const versionInput = document.getElementById('composer-version');
+        if (!versionInput.value) {
+          versionInput.value = defaultVersionLabel();
+        }
+        const workflowSelect = document.getElementById('composer-workflow');
+        if (!workflowSelect.value && Array.from(workflowSelect.options).some((item) => item.value === 'full_iteration')) {
+          workflowSelect.value = 'full_iteration';
+        }
+        const executionModeSelect = document.getElementById('composer-execution-mode');
+        if (!executionModeSelect.value || executionModeSelect.value === 'off') {
+          executionModeSelect.value = 'validate';
+        }
+        const checkedRepos = Array.from(document.querySelectorAll('#composer-repos input[type="checkbox"]:checked'));
+        if (!checkedRepos.length) {
+          const preferredRepos = new Set(['backend', 'frontend']);
+          document.querySelectorAll('#composer-repos input[type="checkbox"]').forEach((input) => {
+            input.checked = preferredRepos.has(input.value);
+          });
+        }
+      }
+
+      function readComposerForm() {
+        const task = document.getElementById('composer-task').value.trim();
+        const workflowRaw = document.getElementById('composer-workflow').value.trim();
+        const executionModeRaw = document.getElementById('composer-execution-mode').value.trim() || 'off';
+        const version = document.getElementById('composer-version').value.trim() || defaultVersionLabel();
+        const contextText = document.getElementById('composer-context').value.trim();
+        const expectedOutput = document.getElementById('composer-expected-output').value.trim();
+        const selectedRepos = Array.from(document.querySelectorAll('#composer-repos input[type="checkbox"]:checked')).map((item) => item.value);
+        const context = {};
+        if (contextText) context.business_context = contextText;
+        if (expectedOutput) context.expected_output = expectedOutput;
+        const startupKeywords = ['启动', '拉起', '跑起来', '运行项目', '运行前端', '运行后端', 'start frontend', 'start backend', 'run frontend', 'run backend'];
+        const hintText = `${task} ${contextText}`.toLowerCase();
+        const wantsStartup = startupKeywords.some((item) => hintText.includes(item.toLowerCase()));
+
+        const workflow = workflowRaw || 'full_iteration';
+        let executionMode = executionModeRaw || 'off';
+        if ((!executionModeRaw || executionModeRaw === 'off') && wantsStartup) {
+          executionMode = 'start';
+        } else if (!executionModeRaw || executionModeRaw === 'off') {
+          executionMode = 'validate';
+        }
+        let repos = selectedRepos;
+        if (!repos.length && executionMode !== 'off') {
+          repos = ['backend', 'frontend'];
+        }
+        repos = Array.from(new Set(repos));
+        return {
+          task,
+          workflow,
+          executionMode,
+          version,
+          context,
+          repos,
+        };
+      }
+
+      function setComposerBusy(isBusy) {
+        document.getElementById('composer-submit').disabled = isBusy;
+        document.getElementById('composer-clear').disabled = isBusy;
+      }
+
+      async function submitConversation() {
+        const form = readComposerForm();
+        if (!form.task) {
+          setComposerStatus('请先填写本轮想让 Agent 做什么。', true);
+          document.getElementById('composer-task').focus();
+          return;
+        }
+
+        const userMessage = {
+          role: 'user',
+          content: form.task,
+          createdAt: new Date().toLocaleString('zh-CN'),
+          workflow: form.workflow || 'manual',
+        };
+        dashboardState.conversationMessages.push(userMessage);
+        persistConversation();
+        renderConversationThread();
+        setComposerBusy(true);
+        setComposerStatus('正在请求 Agent，请稍候...');
+
+        try {
+          const result = await postJson('/api/v1/chat/async', {
+            task: form.task,
+            version: form.version,
+            workflow: form.workflow || null,
+            context: form.context,
+            conversation: buildConversationPayload().slice(0, -1),
+            execution_mode: form.executionMode,
+            repos: form.repos,
+          });
+          const placeholderDetail = {
+            task_id: result.task_id,
+            task: form.task,
+            workflow: form.workflow || 'manual',
+            status: result.status || 'planned',
+            version: form.version,
+            execution: {
+              mode: form.executionMode,
+              repo_names: form.repos,
+            },
+            response: {},
+            events: [],
+            stream_preview: '',
+          };
+          dashboardState.taskDetails[result.task_id] = placeholderDetail;
+          dashboardState.selectedTaskId = result.task_id;
+          dashboardState.activeTaskDetail = placeholderDetail;
+          dashboardState.activeResponse = null;
+          syncTaskItemWithDetail(placeholderDetail);
+          dashboardState.conversationMessages.push({
+            role: 'assistant',
+            content: `任务已创建，正在执行中。\n\n当前状态: ${result.status || 'planned'}\n任务编号: ${result.task_id}`,
+            createdAt: new Date().toLocaleString('zh-CN'),
+            workflow: form.workflow || 'manual',
+            status: result.status || 'planned',
+            taskId: result.task_id,
+            usedAgents: [],
+            usedSkills: [],
+            pending: true,
+          });
+          persistConversation();
+          renderConversationThread();
+          renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+          renderTaskDetail(placeholderDetail);
+          renderLatestFeedback();
+          setComposerStatus(`任务已创建，正在后台执行，task_id=${result.task_id}`);
+          if (!startTaskStream(result.task_id)) {
+            dashboardState.streamStatus = 'fallback';
+            renderRuntimeStrip(dashboardState.meta || {});
+            await pollTaskProgress(result.task_id);
+          }
+        } catch (error) {
+          dashboardState.conversationMessages.push({
+            role: 'assistant',
+            content: `请求失败：${String(error)}`,
+            createdAt: new Date().toLocaleString('zh-CN'),
+            status: 'failed',
+          });
+          persistConversation();
+          renderConversationThread();
+          setComposerStatus(`请求失败：${String(error)}`, true);
+        } finally {
+          setComposerBusy(false);
+        }
+      }
+
+      function clearConversationThread() {
+        dashboardState.conversationMessages = [];
+        dashboardState.activeResponse = null;
+        dashboardState.conversationVisibleCount = 24;
+        persistConversation();
+        renderConversationThread();
+        renderLatestFeedback();
+        setComposerStatus('会话已清空。你可以重新开始一轮新的交流。');
+      }
+
+      function renderResponseSection(response, detail = null) {
+        if (response && response.content) {
+          return `<div class="content-body">${renderMarkdown(response.content, { truncate: 16000 })}</div>`;
+        }
+        if (detail && detail.stream_preview) {
+          return `
+            <div class="muted" style="margin-bottom:8px;">模型正在流式输出中，以下为实时预览。</div>
+            <div class="content-body">${renderMarkdown(detail.stream_preview, { truncate: 1600 })}</div>
+          `;
+        }
+        return '<div class="detail-empty">当前任务还没有可展示的最终回复。</div>';
+      }
+
+      function getTaskWindowCount(store, taskId, initialCount) {
+        if (!taskId) {
+          return initialCount;
+        }
+        if (!store[taskId]) {
+          store[taskId] = initialCount;
+        }
+        return store[taskId];
+      }
+
+      function renderStepList(steps, taskId = '') {
+        if (!steps || !steps.length) {
+          return '<div class="detail-empty">当前任务没有可展示的 Agent 步骤。</div>';
+        }
+        const visibleCount = getTaskWindowCount(dashboardState.stepVisibleCountByTask, taskId, 8);
+        const safeCount = Math.max(1, Math.min(visibleCount, steps.length));
+        const visibleSteps = steps.slice(-safeCount);
+        return `
+          <div class="step-list">
+            ${steps.length > visibleSteps.length
+              ? `<div class="list-window-toolbar">
+                   <span class="muted">仅渲染最近 ${visibleSteps.length} / ${steps.length} 个步骤</span>
+                   <button class="button" data-step-more="${escapeAttribute(taskId || '__global__')}">加载更早步骤</button>
+                 </div>`
+              : ''
+            }
+            ${visibleSteps.map((step) => `
+              <div class="card">
+                <div class="row">
+                  <strong>${escapeHtml(step.title)}</strong>
+                  <span class="pill ${isWarnTaskStatus(step.status) ? 'warn' : ''}">${escapeHtml(step.status || 'completed')}</span>
+                </div>
+                <div class="step-meta">
+                  <span class="pill">${escapeHtml(step.agent || 'agent')}</span>
+                  ${(step.skills || []).map((item) => `<span class="pill">${escapeHtml(item)}</span>`).join('')}
+                </div>
+                <div class="content-body">${renderMarkdown(step.output || '暂无输出', { truncate: 3600 })}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      function renderHandoffList(handoffs) {
+        if (!handoffs || !handoffs.length) {
+          return '<div class="detail-empty">当前任务没有发生 handoff 交接。</div>';
+        }
+        return `
+          <div class="detail-list">
+            ${handoffs.map((item) => `
+              <div class="card">
+                <div class="row">
+                  <strong>${escapeHtml(item.from_agent)} → ${escapeHtml(item.to_agent)}</strong>
+                  <span class="pill">handoff</span>
+                </div>
+                <div class="muted" style="margin-top:8px;">${escapeHtml(item.reason || '')}</div>
+                <div class="content-body" style="margin-top:10px;">${renderMarkdown(item.payload || '', { truncate: 2200 })}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      function renderEventTimeline(events, taskId = '') {
+        if (!events || !events.length) {
+          return '<div class="detail-empty">当前任务还没有事件流记录。</div>';
+        }
+        const visibleCount = getTaskWindowCount(dashboardState.eventVisibleCountByTask, taskId, 50);
+        const safeCount = Math.max(1, Math.min(visibleCount, events.length));
+        const visibleEvents = events.slice(-safeCount);
+        return `
+          <div class="event-list">
+            ${events.length > visibleEvents.length
+              ? `<div class="list-window-toolbar">
+                   <span class="muted">仅渲染最近 ${visibleEvents.length} / ${events.length} 条事件</span>
+                   <button class="button" data-event-more="${escapeAttribute(taskId || '__global__')}">加载更早事件</button>
+                 </div>`
+              : ''
+            }
+            ${visibleEvents.map((item) => `
+              <div class="event-item">
+                <div class="row">
+                  <strong>${escapeHtml(item.event_type)}</strong>
+                  <span class="muted">${escapeHtml(item.created_at || '')}</span>
+                </div>
+                ${item.payload && Object.keys(item.payload).length
+                  ? `<pre class="json-preview">${escapeHtml(truncateText(JSON.stringify(item.payload, null, 2), 2000))}</pre>`
+                  : '<div class="muted" style="margin-top:8px;">无额外 payload</div>'}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      function deriveAcceptanceVerdict(detail) {
+        const response = detail.response || {};
+        const execution = detail.execution || {};
+        const recommendations = response.execution_recommendations || execution.recommendations || [];
+        const commandResults = response.execution_results || execution.command_results || [];
+        const hasFailures = commandResults.some((item) => item.status === 'failed');
+        const hasBlocking = (execution.blocking_reasons || []).length > 0 || response.status === 'blocked';
+        const hasCoverage = recommendations.some((item) => (item.failure_kind || '').includes('coverage') || (item.title || '').includes('覆盖率'));
+        const hasTestPhase = commandResults.some((item) => item.phase === 'test');
+        if (hasBlocking) {
+          return '当前任务存在阻断项，建议先根据自动建议和文件时间线完成修复后再签收。';
+        }
+        if (hasFailures) {
+          return '当前任务没有被显式标记为阻断，但已有失败命令记录，建议补跑测试或验证后再签收。';
+        }
+        if (hasTestPhase || hasCoverage) {
+          return '当前任务已经具备测试或覆盖率相关信息，可以进入验收确认阶段。';
+        }
+        return '当前任务主流程已完成，但仍建议补一次 test/validate，形成更完整的验收证据。';
+      }
+
+      function buildAcceptanceReport(detail) {
+        const response = detail.response || {};
+        const execution = detail.execution || {};
+        const commandResults = response.execution_results || execution.command_results || [];
+        const recommendations = response.execution_recommendations || execution.recommendations || [];
+        const events = detail.events || [];
+        const report = [
+          `# 验收报告 - ${detail.task_id}`,
+          '',
+          `- 任务: ${detail.task}`,
+          `- workflow: ${detail.workflow || 'manual'}`,
+          `- status: ${detail.status}`,
+          `- version: ${detail.version}`,
+          `- execution_mode: ${response.execution_mode || execution.mode || 'off'}`,
+          `- agents: ${(response.used_agents || []).join(', ') || '-'}`,
+          `- skills: ${(response.used_skills || []).join(', ') || '-'}`,
+          `- repos: ${(response.repos || execution.repo_names || []).join(', ') || '-'}`,
+          '',
+          '## 验收结论',
+          deriveAcceptanceVerdict(detail),
+          '',
+          '## 最终回复',
+          response.content || '暂无最终回复',
+          '',
+          '## Agent 步骤',
+          ...(response.steps || []).length
+            ? response.steps.map((step, index) => [
+                `### ${index + 1}. ${step.title}`,
+                `- agent: ${step.agent}`,
+                `- status: ${step.status}`,
+                `- skills: ${(step.skills || []).join(', ') || '-'}`,
+                '',
+                step.output || '暂无输出',
+                '',
+              ].join('\n'))
+            : ['- 无 Agent 步骤记录', ''],
+          '## Handoff',
+          ...(response.handoffs || []).length
+            ? response.handoffs.map((item) => `- ${item.from_agent} -> ${item.to_agent}: ${item.reason}`)
+            : ['- 无 handoff'],
+          '',
+          '## 阻断原因',
+          ...((execution.blocking_reasons || []).length ? execution.blocking_reasons.map((item) => `- ${item}`) : ['- 无']),
+          '',
+          '## 命令执行记录',
+          ...(commandResults.length
+            ? commandResults.map((item) => `- [${item.phase}] ${item.repo_name}: ${item.status}${item.exit_code !== null && item.exit_code !== undefined ? ` (exit=${item.exit_code})` : ''}${item.command ? `\n  command: ${item.command}` : ''}`)
+            : ['- 无']),
+          '',
+          '## 自动建议',
+          ...(recommendations.length
+            ? recommendations.map((item) => `- [${item.priority || 'medium'}] ${item.title}: ${item.summary}`)
+            : ['- 无']),
+          '',
+          '## 事件时间线',
+          ...(events.length
+            ? events.map((item) => `- ${item.created_at} / ${item.event_type}`)
+            : ['- 无']),
+          '',
+        ].join('\n');
+        return report.trim();
+      }
+
+      async function copyAcceptanceReport(detail) {
+        const report = buildAcceptanceReport(detail);
+        await navigator.clipboard.writeText(report);
+        setComposerStatus('验收报告已复制到剪贴板。');
+      }
+
+      function downloadAcceptanceReport(detail) {
+        const report = buildAcceptanceReport(detail);
+        const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `acceptance-report-${detail.task_id}.md`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        setComposerStatus('验收报告已下载。');
+      }
+
+      function renderAcceptanceReport(detail) {
+        const report = buildAcceptanceReport(detail);
+        return `
+          <div class="muted">这是一份基于当前任务快照自动生成的 Markdown 验收报告，可直接复制到文档或群里继续流转。</div>
+          <div class="report-actions">
+            <button class="button" data-copy-report="${detail.task_id}">复制 Markdown</button>
+            <button class="button warn" data-download-report="${detail.task_id}">下载 .md</button>
+          </div>
+          <pre class="report-preview">${escapeHtml(report)}</pre>
+        `;
+      }
+
+      async function loadJson(url) {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed: ${url}`);
+        return response.json();
+      }
+
+      async function postJson(url, payload) {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `Failed: ${url}`);
+        }
+        return response.json();
+      }
+
+      async function stopRuntimeProcesses(payload = {}, targetLabel = '运行进程') {
+        setComposerStatus(`正在关闭：${targetLabel} ...`);
+        try {
+          const result = await postJson('/api/v1/runtime/processes/stop', payload);
+          const total = Array.isArray(result.items) ? result.items.length : 0;
+          const stopped = Number(result.stopped || 0);
+          const failed = Number(result.failed || 0);
+          const remaining = Number(result.remaining || 0);
+          if (failed > 0) {
+            setComposerStatus(`关闭完成：共处理 ${total} 个，成功 ${stopped} 个，失败 ${failed} 个，剩余 ${remaining} 个。`, true);
+          } else {
+            setComposerStatus(`关闭完成：共处理 ${total} 个，成功 ${stopped} 个，剩余 ${remaining} 个。`);
+          }
+          await boot(dashboardState.selectedTaskId);
+        } catch (error) {
+          setComposerStatus(`关闭进程失败：${String(error)}`, true);
+        }
+      }
+
+      function renderSummary(summary) {
+        const grid = document.getElementById('summary-grid');
+        const stats = [
+          ['任务总数', summary.total_tasks],
+          ['成功任务', summary.completed_tasks],
+          ['阻断任务', summary.blocked_tasks || 0],
+          ['失败任务', summary.failed_tasks],
+          ['取消任务', summary.canceled_tasks || 0],
+          ['插件数', summary.skill_plugin_count],
+          ['事件数', summary.total_events],
+        ];
+        grid.innerHTML = stats.map(([label, value]) => `
+          <div class="stat">
+            <span>${label}</span>
+            <strong>${value}</strong>
+          </div>
+        `).join('');
+      }
+
+      function renderTasks(items, taskDetails) {
+        const root = document.getElementById('tasks');
+        const filteredItems = filteredTaskItems(items);
+        updateTaskFilterMeta(items.length, filteredItems.length);
+        if (!filteredItems.length) {
+          root.innerHTML = `<div class="empty-state">当前筛选条件下没有任务。你可以调整搜索词、状态或取消“仅看收藏”。</div>`;
+          return;
+        }
+        root.innerHTML = filteredItems.map(item => `
+          <div class="card ${dashboardState.selectedTaskId === item.task_id ? 'selected' : ''}" data-task-card="${item.task_id}">
+            <div class="row">
+              <div class="row" style="justify-content:flex-start;">
+                <button class="star-button ${isFavoriteTask(item.task_id) ? 'active' : ''}" data-favorite-task="${item.task_id}">${isFavoriteTask(item.task_id) ? '★' : '☆'}</button>
+                <strong>${item.workflow || 'manual'}</strong>
+              </div>
+              <span class="pill ${isWarnTaskStatus(item.status) ? 'warn' : ''}">${item.status}</span>
+            </div>
+            <div style="margin-top:8px;">${item.task}</div>
+            ${renderTaskExecution(item, taskDetails[item.task_id])}
+            <div class="actions">
+              <button class="button" data-open-task-modal="${item.task_id}">查看详情弹窗</button>
+            </div>
+            <div class="muted" style="margin-top:8px;">task_id: <code>${item.task_id}</code></div>
+          </div>
+        `).join('');
+        root.querySelectorAll('[data-favorite-task]').forEach((button) => {
+          button.addEventListener('click', () => {
+            toggleFavoriteTask(button.dataset.favoriteTask);
+          });
+        });
+        root.querySelectorAll('[data-open-task-modal]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await openTaskDetailModal(button.dataset.openTaskModal);
+          });
+        });
+      }
+
+      function renderTaskExecution(item, detail) {
+        if (!detail) return '';
+        const execution = detail.execution || {};
+        const blockingReasons = execution.blocking_reasons || [];
+        const recommendations = (execution.recommendations || []).slice(0, 2);
+        const executionMode = execution.mode && execution.mode !== 'off'
+          ? `<div class="muted" style="margin-top:8px;">执行模式: <code>${execution.mode}</code></div>`
+          : '';
+        const blockerHtml = blockingReasons.length
+          ? `<div class="muted" style="margin-top:8px;color:var(--warn);">阻断: ${blockingReasons[0]}</div>`
+          : '';
+        const recommendationHtml = recommendations.length
+          ? `<div class="muted" style="margin-top:8px;">建议: ${recommendations.map(item => item.title).join(' / ')}</div>`
+          : '';
+        return `${executionMode}${blockerHtml}${recommendationHtml}`;
+      }
+
+      function collectTaskLocations(recommendations) {
+        const grouped = new Map();
+        for (const recommendation of recommendations) {
+          for (const location of recommendation.locations || []) {
+            if (!location.path) continue;
+            const existing = grouped.get(location.path) || {
+              path: location.path,
+              exists: location.exists,
+              recommendationTitles: new Set(),
+              entries: [],
+            };
+            existing.exists = existing.exists || location.exists;
+            existing.recommendationTitles.add(recommendation.title);
+            const key = `${location.path}:${location.line || 0}:${location.column || 0}:${location.label || ''}`;
+            if (!existing.entries.some((item) => item.key === key)) {
+              existing.entries.push({
+                key,
+                path: location.path,
+                line: location.line || 1,
+                column: location.column || 0,
+                label: location.label || '',
+                exists: location.exists,
+              });
+            }
+            grouped.set(location.path, existing);
+          }
+        }
+        return Array.from(grouped.values()).sort((left, right) => left.path.localeCompare(right.path));
+      }
+
+      function collectFileTimelineEntries(recommendations, diffMeta = {}) {
+        const grouped = new Map();
+        for (const recommendation of recommendations) {
+          const locations = recommendation.locations && recommendation.locations.length
+            ? recommendation.locations
+            : [{ path: '__unscoped__', exists: false, line: 0, column: 0, label: '未定位文件' }];
+
+          for (const location of locations) {
+            const key = location.path || '__unscoped__';
+            const existing = grouped.get(key) || {
+              path: location.path || '',
+              exists: !!location.exists,
+              recommendationTitles: new Set(),
+              failureKinds: new Set(),
+              workflows: new Set(),
+              commands: new Set(),
+              recoverySteps: new Set(),
+              primaryErrors: [],
+              entries: [],
+              unscoped: key === '__unscoped__',
+            };
+            existing.exists = existing.exists || !!location.exists;
+            existing.recommendationTitles.add(recommendation.title);
+            if (recommendation.failure_kind) existing.failureKinds.add(recommendation.failure_kind);
+            if (recommendation.suggested_workflow) {
+              existing.workflows.add(`${recommendation.suggested_workflow}/${recommendation.suggested_execution_mode || 'status'}`);
+            }
+            for (const command of recommendation.suggested_commands || []) {
+              existing.commands.add(command);
+            }
+            for (const step of recommendation.recovery_steps || []) {
+              existing.recoverySteps.add(step);
+            }
+            if (recommendation.primary_error && !existing.primaryErrors.includes(recommendation.primary_error)) {
+              existing.primaryErrors.push(recommendation.primary_error);
+            }
+
+            const entryKey = `${location.path || key}:${location.line || 0}:${location.column || 0}:${location.label || ''}`;
+            if (!existing.entries.some((item) => item.key === entryKey)) {
+              existing.entries.push({
+                key: entryKey,
+                path: location.path || '',
+                line: location.line || 1,
+                column: location.column || 0,
+                label: location.label || '',
+                exists: !!location.exists,
+              });
+            }
+            grouped.set(key, existing);
+          }
+        }
+
+        const items = Array.from(grouped.values());
+        for (const item of items) {
+          const meta = diffMeta[item.path || ''] || {};
+          item.hasDiff = !!meta.hasDiff;
+          item.inRepo = !!meta.inRepo;
+          item.repoName = meta.repoName || '';
+          item.relativePath = meta.relativePath || '';
+        }
+        items.sort((left, right) => {
+          const scoreDiff = timelinePriorityScore(right) - timelinePriorityScore(left);
+          if (scoreDiff !== 0) {
+            return scoreDiff;
+          }
+          if (left.unscoped !== right.unscoped) {
+            return left.unscoped ? 1 : -1;
+          }
+          return (left.path || '').localeCompare(right.path || '');
+        });
+        return items;
+      }
+
+      function timelinePriorityScore(group) {
+        let score = 0;
+        if (group.primaryErrors.length) score += 8;
+        if (group.workflows.size) score += 4;
+        if (group.hasDiff) score += 2;
+        if (group.failureKinds.size) score += 1;
+        if (group.unscoped) score -= 10;
+        return score;
+      }
+
+      function timelinePriorityMeta(group) {
+        const score = timelinePriorityScore(group);
+        if (score >= 10) return { label: '立即排查', warn: true };
+        if (score >= 6) return { label: '优先关注', warn: true };
+        if (score >= 3) return { label: '建议复核', warn: false };
+        return { label: '次级线索', warn: false };
+      }
+
+      function renderFileTimeline(recommendations, diffMeta = {}) {
+        const groups = collectFileTimelineEntries(recommendations, diffMeta);
+        if (!groups.length) {
+          return `<div class="detail-empty">当前任务没有可聚合的文件级排查线索。</div>`;
+        }
+        return `
+          <div class="location-groups">
+            ${groups.map((group) => {
+              const isActive = !group.unscoped && dashboardState.selectedSnippet && dashboardState.selectedSnippet.path === group.path;
+              const displayPath = group.unscoped ? '未定位文件' : formatLocationLabel({ path: group.path });
+              const priority = timelinePriorityMeta(group);
+              return `
+                <div class="location-group-card ${isActive ? 'active' : ''}">
+                  <div class="row">
+                    <strong>${displayPath}</strong>
+                    <div class="row" style="justify-content:flex-end;">
+                      <span class="pill ${priority.warn ? 'warn' : ''}">${priority.label}</span>
+                      <span class="pill ${group.exists || group.unscoped ? '' : 'warn'}">${group.entries.length || 1} 个线索</span>
+                    </div>
+                  </div>
+                  <div class="timeline-meta">
+                    <div class="muted">来源建议: ${Array.from(group.recommendationTitles).join(' / ')}</div>
+                    ${group.failureKinds.size ? `<div class="muted">失败类型: <code>${Array.from(group.failureKinds).join(', ')}</code></div>` : ''}
+                    ${group.workflows.size ? `<div class="muted">建议 workflow: <code>${Array.from(group.workflows).join(' | ')}</code></div>` : ''}
+                    ${group.primaryErrors.length ? `<div class="muted" style="color:var(--warn);">关键错误: ${escapeHtml(group.primaryErrors[0])}</div>` : ''}
+                    ${group.hasDiff ? `<div class="muted">工作区状态: <code>有 diff</code></div>` : ''}
+                    ${group.inRepo && !group.hasDiff ? `<div class="muted">工作区状态: <code>无未提交 diff</code></div>` : ''}
+                  </div>
+                  ${!group.unscoped ? `
+                    <div class="actions">
+                      <button
+                        class="button"
+                        data-location-path="${group.path}"
+                        data-location-line="${group.entries[0].line || 1}"
+                        ${group.exists ? '' : 'disabled'}
+                      >
+                        查看首个定位
+                      </button>
+                    </div>
+                  ` : ''}
+                  ${group.entries.length ? `
+                    <div class="location-lines">
+                      ${group.entries.map((entry, index) => `
+                        <button
+                          class="button ${!group.unscoped && dashboardState.selectedSnippet && dashboardState.selectedSnippet.path === entry.path && Number(dashboardState.selectedSnippet.line) === Number(entry.line) ? 'warn' : ''}"
+                          ${group.unscoped ? 'disabled' : ''}
+                          data-location-path="${entry.path}"
+                          data-location-line="${entry.line || 1}"
+                        >
+                          ${group.unscoped ? '无源码定位' : (entry.label ? `${entry.label}` : `L${entry.line || index + 1}`)}
+                        </button>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                  ${group.commands.size ? renderCommandList(Array.from(group.commands).slice(0, 3)) : ''}
+                  ${group.recoverySteps.size ? `
+                    <div class="muted" style="margin-top:10px;">恢复步骤:</div>
+                    <div class="detail-list" style="margin-top:8px;">
+                      ${Array.from(group.recoverySteps).slice(0, 4).map((step, index) => `<div class="muted">${index + 1}. ${step}</div>`).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+
+      function renderPrompts(items) {
+        const root = document.getElementById('prompts');
+        root.innerHTML = items.map(item => `
+          <div class="card">
+            <div class="row">
+              <strong>${item.label}</strong>
+              <span class="pill ${item.is_active ? '' : 'warn'}">${item.is_active ? 'active' : 'inactive'}</span>
+            </div>
+            <div class="muted" style="margin-top:8px;">${item.title}</div>
+            <div class="muted"><code>${item.source_path}</code></div>
+          </div>
+        `).join('');
+      }
+
+      function renderPlugins(items) {
+        const root = document.getElementById('plugins');
+        root.innerHTML = items.map(item => `
+          <div class="card">
+            <div class="row">
+              <strong>${item.name}</strong>
+              <span class="pill ${item.enabled ? '' : 'warn'}">${item.enabled ? 'enabled' : 'disabled'}</span>
+            </div>
+            <div class="muted" style="margin-top:8px;">${item.skills.length} skills</div>
+            <div class="muted"><code>${item.source_dir}</code></div>
+          </div>
+        `).join('');
+      }
+
+      function renderRepos(items) {
+        const root = document.getElementById('repos');
+        root.innerHTML = items.map(item => `
+          <div class="card">
+            <div class="row">
+              <strong>${item.name}</strong>
+              <span class="pill ${item.exists ? '' : 'warn'}">${item.exists ? item.branch : 'missing'}</span>
+            </div>
+            <div class="muted" style="margin-top:8px;"><code>${item.local_path}</code></div>
+          </div>
+        `).join('');
+      }
+
+      function renderServices(items) {
+        const root = document.getElementById('services');
+        root.innerHTML = items.map(item => `
+          <div class="card">
+            <div class="row">
+              <strong>${item.name}</strong>
+              <span class="pill">${item.host}:${item.port}</span>
+            </div>
+            <div class="muted" style="margin-top:8px;">${item.database || 'no-db'} ${item.username ? `| ${item.username}` : ''}</div>
+          </div>
+        `).join('');
+      }
+
+      function renderRuntimeProcesses(items) {
+        const root = document.getElementById('runtime-processes');
+        if (!items.length) {
+          root.innerHTML = `<div class="empty-state">当前没有由 Agent 拉起并登记的后台进程。</div>`;
+          return;
+        }
+        root.innerHTML = items.map((item) => `
+          <div class="card">
+            <div class="row">
+              <strong>${escapeHtml(item.repo_name || 'repo')}</strong>
+              <span class="pill">${escapeHtml(item.phase || 'start')} / pid ${escapeHtml(String(item.pid || ''))}</span>
+            </div>
+            <div class="muted" style="margin-top:8px;"><code>${escapeHtml(item.command || '')}</code></div>
+            <div class="muted">started_at: ${escapeHtml(item.started_at || '')}</div>
+            <div class="muted">log: <code>${escapeHtml(item.log_path || '')}</code></div>
+            <div class="actions" style="margin-top:10px;">
+              <button
+                class="button warn"
+                data-stop-process-repo="${escapeAttribute(item.repo_name || '')}"
+                data-stop-process-phase="${escapeAttribute(item.phase || '')}"
+              >
+                停止该进程
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        root.querySelectorAll('[data-stop-process-repo]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            const repoName = button.dataset.stopProcessRepo || '';
+            const phase = button.dataset.stopProcessPhase || '';
+            const payload = {};
+            if (repoName) payload.repo_name = repoName;
+            if (phase) payload.phase = phase;
+            const targetLabel = phase ? `${repoName}/${phase}` : (repoName || '运行进程');
+            await stopRuntimeProcesses(payload, targetLabel);
+          });
+        });
+      }
+
+      function buildTaskDetailMarkup(detail) {
+        if (!detail) {
+          return `<div class="detail-empty">选择一个任务查看执行详情、阻断原因和快速重跑操作。</div>`;
+        }
+
+        const execution = detail.execution || {};
+        const response = detail.response || {};
+        const recommendations = response.execution_recommendations || execution.recommendations || [];
+        const commandResults = response.execution_results || execution.command_results || [];
+        const blockingReasons = execution.blocking_reasons || [];
+        const gateResults = response.gate_results || detail.gates || [];
+        const effectiveRequest = detail.user_request || detail.request || {};
+        const diffMeta = dashboardState.taskFileMeta[detail.task_id] || {};
+        const stepItems = (response.steps && response.steps.length)
+          ? response.steps
+          : ((detail.plan && detail.plan.steps) || []);
+
+        return `
+          <div class="detail-group">
+            <div class="row">
+              <strong>${detail.workflow || 'manual'} / ${detail.status}</strong>
+              <span class="pill ${isWarnTaskStatus(detail.status) ? 'warn' : ''}">${detail.version}</span>
+            </div>
+            <div style="margin-top:10px;">${detail.task}</div>
+            <div class="muted" style="margin-top:8px;">task_id: <code>${detail.task_id}</code></div>
+            <div class="muted">execution_mode: <code>${response.execution_mode || execution.mode || 'off'}</code></div>
+            <div class="actions">
+              <button class="button" data-rerun-mode="status">重跑状态检查</button>
+              <button class="button" data-rerun-mode="test">重跑测试</button>
+              <button class="button warn" data-rerun-mode="validate">重跑验证</button>
+              ${isTerminalTaskStatus(detail.status) ? '' : `<button class="button warn" data-cancel-task="${detail.task_id}">取消任务</button>`}
+            </div>
+            <div class="hint">快速重跑会沿用原始请求，只覆盖 execution_mode，并优先复用原来的 repos。</div>
+          </div>
+          <div class="detail-group">
+            <h3>最终回复</h3>
+            ${renderResponseSection(response, detail)}
+          </div>
+          <div class="detail-group">
+            <h3>Agent 步骤</h3>
+            ${renderStepList(stepItems, detail.task_id)}
+          </div>
+          <div class="detail-group">
+            <h3>Handoff 交接</h3>
+            ${renderHandoffList(response.handoffs || detail.handoffs || [])}
+          </div>
+          <div class="detail-group">
+            <h3>事件时间线</h3>
+            ${renderEventTimeline(detail.events || [], detail.task_id)}
+          </div>
+          <div class="detail-group">
+            <h3>阻断原因</h3>
+            <div class="detail-list">
+              ${blockingReasons.length
+                ? blockingReasons.map(item => `<div class="muted" style="color:var(--warn);">${item}</div>`).join('')
+                : '<div class="detail-empty">当前任务没有工作区阻断。</div>'}
+            </div>
+          </div>
+          <div class="detail-group">
+            <h3>质量门禁</h3>
+            ${renderGateResultList(gateResults)}
+          </div>
+          <div class="detail-group">
+            <h3>文件时间线</h3>
+            ${renderFileTimeline(recommendations, diffMeta)}
+          </div>
+          <div class="detail-group">
+            <h3>自动建议</h3>
+            <div class="detail-list">
+              ${recommendations.length
+                ? recommendations.map((item) => `
+                    <div class="card">
+                      <div class="row">
+                        <strong>${item.title}</strong>
+                        <span class="pill ${item.priority === 'high' ? 'warn' : ''}">${item.priority || 'medium'}</span>
+                      </div>
+                      ${item.failure_kind ? `<div class="muted" style="margin-top:8px;">type: <code>${item.failure_kind}</code></div>` : ''}
+                      <div class="muted" style="margin-top:8px;">${item.summary}</div>
+                      ${item.primary_error
+                        ? `<div class="muted" style="margin-top:8px;color:var(--warn);">关键错误: ${item.primary_error}</div>`
+                        : ''}
+                      ${item.failed_targets && item.failed_targets.length
+                        ? `<div class="muted" style="margin-top:8px;">失败目标: <code>${item.failed_targets.join(', ')}</code></div>`
+                        : ''}
+                      ${item.locations && item.locations.length
+                        ? `<div class="muted" style="margin-top:8px;">源码定位:</div>
+                           <div class="actions">
+                             ${item.locations.map((location) => `
+                               <button
+                                 class="button"
+                                 data-location-path="${location.path}"
+                                 data-location-line="${location.line || 1}"
+                                 ${location.exists ? '' : 'disabled'}
+                               >
+                                 ${location.label || formatLocationLabel(location)}
+                               </button>
+                             `).join('')}
+                           </div>`
+                        : ''}
+                      ${item.related_skills && item.related_skills.length
+                        ? `<div class="muted" style="margin-top:8px;">skills: <code>${item.related_skills.join(', ')}</code></div>`
+                        : ''}
+                      ${renderCommandList(item.suggested_commands)}
+                      ${item.suggested_workflow
+                        ? `<div class="muted" style="margin-top:8px;">workflow: <code>${item.suggested_workflow}</code> / <code>${item.suggested_execution_mode || 'status'}</code></div>`
+                        : ''}
+                      ${item.recovery_steps && item.recovery_steps.length
+                        ? `<div class="muted" style="margin-top:8px;">恢复步骤:</div>
+                           <div class="detail-list" style="margin-top:8px;">
+                             ${item.recovery_steps.map((step, index) => `<div class="muted">${index + 1}. ${step}</div>`).join('')}
+                           </div>`
+                        : ''}
+                      ${item.suggested_workflow
+                        ? `<div class="actions">
+                            <button
+                              class="button"
+                              data-recommendation-workflow="${item.suggested_workflow}"
+                              data-recommendation-mode="${item.suggested_execution_mode || 'status'}"
+                              data-recommendation-repos="${(item.suggested_repos || []).join(',')}"
+                            >
+                              按建议重跑
+                            </button>
+                          </div>`
+                        : ''}
+                      ${item.evidence
+                        ? `<pre style="margin-top:10px;max-height:180px;">${escapeHtml(item.evidence)}</pre>`
+                        : ''}
+                    </div>
+                  `).join('')
+                : '<div class="detail-empty">当前任务没有生成自动建议。</div>'}
+            </div>
+          </div>
+          <div class="detail-group">
+            <h3>命令执行记录</h3>
+            <div class="detail-list">
+              ${commandResults.length
+                ? commandResults.map((item) => `
+                    <div class="card">
+                      <div class="row">
+                        <strong>${item.repo_name} / ${item.phase}</strong>
+                        <span class="pill ${item.status === 'failed' ? 'warn' : ''}">${item.status}</span>
+                      </div>
+                      ${item.command ? `<div class="muted" style="margin-top:8px;"><code>${item.command}</code></div>` : ''}
+                      ${item.exit_code !== null && item.exit_code !== undefined
+                        ? `<div class="muted">exit=${item.exit_code}</div>`
+                        : ''}
+                      ${(item.stderr || item.stdout || item.reason)
+                        ? `<pre style="margin-top:10px;max-height:180px;">${escapeHtml(item.stderr || item.stdout || item.reason)}</pre>`
+                        : ''}
+                    </div>
+                  `).join('')
+                : '<div class="detail-empty">当前任务没有执行 build/test 命令。</div>'}
+            </div>
+          </div>
+          <div class="detail-group">
+            <h3>自动验收报告</h3>
+            ${renderAcceptanceReport(detail)}
+          </div>
+          <div class="detail-group">
+            <h3>源码片段</h3>
+            ${renderSnippetPanel()}
+          </div>
+          <div class="detail-group">
+            <h3>Git Diff</h3>
+            ${renderDiffPanel()}
+          </div>
+          <div class="detail-group">
+            <h3>原始请求</h3>
+            <pre>${escapeHtml(JSON.stringify(effectiveRequest, null, 2))}</pre>
+          </div>
+        `;
+      }
+
+      function bindTaskDetailActions(root, detail) {
+        root.querySelectorAll('[data-rerun-mode]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await rerunTask(detail, button.dataset.rerunMode);
+          });
+        });
+        root.querySelectorAll('[data-cancel-task]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await cancelTask(button.dataset.cancelTask || detail.task_id);
+          });
+        });
+        root.querySelectorAll('[data-step-more]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const taskId = button.dataset.stepMore || detail.task_id;
+            const key = taskId === '__global__' ? detail.task_id : taskId;
+            const currentCount = getTaskWindowCount(dashboardState.stepVisibleCountByTask, key, 8);
+            dashboardState.stepVisibleCountByTask[key] = currentCount + 8;
+            renderTaskDetail(detail);
+          });
+        });
+        root.querySelectorAll('[data-event-more]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const taskId = button.dataset.eventMore || detail.task_id;
+            const key = taskId === '__global__' ? detail.task_id : taskId;
+            const currentCount = getTaskWindowCount(dashboardState.eventVisibleCountByTask, key, 50);
+            dashboardState.eventVisibleCountByTask[key] = currentCount + 50;
+            renderTaskDetail(detail);
+          });
+        });
+        root.querySelectorAll('[data-location-path]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await showSnippet(button.dataset.locationPath, Number(button.dataset.locationLine || '1'));
+          });
+        });
+        root.querySelectorAll('[data-recommendation-workflow]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await rerunTask(detail, button.dataset.recommendationMode, {
+              workflow: button.dataset.recommendationWorkflow,
+              repos: (button.dataset.recommendationRepos || '')
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean),
+            });
+          });
+        });
+        root.querySelectorAll('[data-copy-report]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await copyAcceptanceReport(detail);
+          });
+        });
+        root.querySelectorAll('[data-download-report]').forEach((button) => {
+          button.addEventListener('click', () => {
+            downloadAcceptanceReport(detail);
+          });
+        });
+      }
+
+      function renderTaskDetail(detail) {
+        const roots = getTaskDetailRoots();
+        if (!roots.length) return;
+        const markup = buildTaskDetailMarkup(detail);
+        roots.forEach((root) => {
+          root.innerHTML = markup;
+          if (detail) {
+            bindTaskDetailActions(root, detail);
+          }
+        });
+      }
+
+      function findFirstLocation(detail) {
+        const execution = detail && detail.execution ? detail.execution : {};
+        const response = detail && detail.response ? detail.response : {};
+        const recommendations = response.execution_recommendations || execution.recommendations || [];
+        for (const recommendation of recommendations) {
+          for (const location of recommendation.locations || []) {
+            if (location.path && location.exists) {
+              return {
+                path: location.path,
+                line: location.line || 1,
+              };
+            }
+          }
+        }
+        return null;
+      }
+
+      async function ensureTaskDetail(taskId) {
+        if (dashboardState.taskDetails[taskId]) {
+          return dashboardState.taskDetails[taskId];
+        }
+        const detail = await loadJson(`/api/v1/tasks/${taskId}`);
+        dashboardState.taskDetails[taskId] = detail;
+        return detail;
+      }
+
+      async function selectTask(taskId, options = {}) {
+        if (options.switchView !== false) {
+          setActiveView('tasks');
+        }
+        dashboardState.selectedTaskId = taskId;
+        dashboardState.selectedSnippet = null;
+        dashboardState.selectedDiff = null;
+        const detail = await ensureTaskDetail(taskId);
+        dashboardState.activeTaskDetail = detail;
+        dashboardState.activeResponse = detail.response || null;
+        renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+        await preloadTimelineMeta(detail);
+        renderTaskDetail(detail);
+        if (options.openModal) {
+          setTaskDetailModalVisible(true);
+        }
+        renderLatestFeedback();
+        if (!isTerminalTaskStatus(detail.status)) {
+          if (!startTaskStream(taskId) && dashboardState.pollingTaskId !== taskId) {
+            clearTaskPolling();
+            pollTaskProgress(taskId).catch((error) => {
+              console.warn('pollTaskProgress failed', error);
+            });
+          }
+        } else if (dashboardState.streamTaskId === taskId) {
+          clearTaskStream();
+        }
+        const firstLocation = findFirstLocation(detail);
+        if (firstLocation) {
+          await showSnippet(firstLocation.path, firstLocation.line);
+        }
+      }
+
+      async function rerunTask(detail, mode, overrides = {}) {
+        const baseRequest = detail.user_request || detail.request || {};
+        const payload = {
+          task: baseRequest.task || detail.task,
+          version: baseRequest.version || detail.version,
+          workflow: overrides.workflow || baseRequest.workflow || detail.workflow,
+          skills: baseRequest.skills || [],
+          agents: baseRequest.agents || [],
+          context: baseRequest.context || {},
+          conversation: baseRequest.conversation || [],
+          execution_mode: mode,
+          repos: overrides.repos || baseRequest.repos || (detail.execution && detail.execution.repo_names) || [],
+        };
+        document.querySelectorAll('[data-rerun-mode]').forEach((button) => {
+          button.disabled = true;
+        });
+        try {
+          const result = await postJson('/api/v1/chat/async', payload);
+          const placeholderDetail = {
+            task_id: result.task_id,
+            task: payload.task,
+            workflow: payload.workflow || 'manual',
+            status: result.status || 'planned',
+            version: payload.version,
+            execution: {
+              mode,
+              repo_names: payload.repos || [],
+            },
+            response: {},
+            events: [],
+            stream_preview: '',
+          };
+          dashboardState.taskDetails[result.task_id] = placeholderDetail;
+          dashboardState.selectedTaskId = result.task_id;
+          dashboardState.activeTaskDetail = placeholderDetail;
+          dashboardState.activeResponse = null;
+          syncTaskItemWithDetail(placeholderDetail);
+          renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+          renderTaskDetail(placeholderDetail);
+          renderLatestFeedback();
+          setComposerStatus(`已发起重跑，task_id=${result.task_id}`);
+          if (!startTaskStream(result.task_id)) {
+            dashboardState.streamStatus = 'fallback';
+            renderRuntimeStrip(dashboardState.meta || {});
+            await pollTaskProgress(result.task_id);
+          }
+        } catch (error) {
+          alert(`重跑失败: ${String(error)}`);
+        } finally {
+          document.querySelectorAll('[data-rerun-mode]').forEach((button) => {
+            button.disabled = false;
+          });
+        }
+      }
+
+      function renderGateResultList(gates) {
+        const items = Array.isArray(gates) ? gates : [];
+        if (!items.length) {
+          return '<div class="detail-empty">当前任务未返回质量门禁结果。</div>';
+        }
+        return `
+          <div class="detail-list">
+            ${items.map((item) => `
+              <div class="card">
+                <div class="row">
+                  <strong>${escapeHtml(item.gate_name || 'gate')}</strong>
+                  <span class="pill ${item.status === 'failed' ? 'warn' : ''}">${escapeHtml(item.status || 'passed')}</span>
+                </div>
+                <div class="muted" style="margin-top:8px;">${escapeHtml(item.summary || '-')}</div>
+                ${item.details && item.details.length
+                  ? `<div class="detail-list" style="margin-top:8px;">
+                      ${item.details.map((line) => `<div class="muted" style="${item.blocking ? 'color:var(--warn);' : ''}">${escapeHtml(line)}</div>`).join('')}
+                    </div>`
+                  : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      async function cancelTask(taskId) {
+        if (!taskId) return;
+        setComposerStatus(`正在取消任务 ${taskId} ...`);
+        try {
+          const result = await postJson(`/api/v1/tasks/${encodeURIComponent(taskId)}/cancel`, {});
+          if (result.accepted) {
+            setComposerStatus(`取消请求已发送，task_id=${taskId}`);
+          } else {
+            setComposerStatus(`任务取消未生效：${result.reason || '未知原因'}`, true);
+          }
+          await pollTaskProgress(taskId);
+        } catch (error) {
+          setComposerStatus(`取消任务失败：${String(error)}`, true);
+        }
+      }
+
+      function renderSnippetPanel() {
+        if (!dashboardState.selectedSnippet) {
+          return `<div class="detail-empty">点击上方“源码定位”按钮可查看对应文件片段。</div>`;
+        }
+        const snippet = dashboardState.selectedSnippet;
+        if (!snippet.exists) {
+          return `<div class="detail-empty">文件不存在：<code>${escapeHtml(snippet.path)}</code></div>`;
+        }
+        return `
+          <div class="muted" style="margin-bottom:8px;"><code>${escapeHtml(snippet.path)}</code> @ line ${snippet.line}</div>
+          <pre>${snippet.lines.map((item) => `${String(item.number).padStart(4, ' ')} ${item.highlight ? '>' : ' '} ${escapeHtml(item.text)}`).join('\n')}</pre>
+        `;
+      }
+
+      function renderDiffPanel() {
+        if (!dashboardState.selectedDiff) {
+          return `<div class="detail-empty">选择源码定位后会同步显示该文件当前的 Git diff。</div>`;
+        }
+        const diff = dashboardState.selectedDiff;
+        if (!diff.in_repo) {
+          return `<div class="detail-empty">该文件不在已配置仓库中，无法读取 Git diff。</div>`;
+        }
+        if (!diff.diff) {
+          return `
+            <div class="detail-empty">
+              当前文件在工作区没有未提交 diff。
+              <div class="muted" style="margin-top:8px;"><code>${escapeHtml(diff.relative_path || diff.path)}</code></div>
+            </div>
+          `;
+        }
+        return `
+          <div class="muted" style="margin-bottom:8px;"><code>${escapeHtml(diff.relative_path || diff.path)}</code> @ ${escapeHtml(diff.repo_name)}</div>
+          <pre>${escapeHtml(diff.diff)}</pre>
+        `;
+      }
+
+      async function showSnippet(path, line) {
+        try {
+          dashboardState.selectedSnippet = await loadJson(`/api/v1/files/snippet?path=${encodeURIComponent(path)}&line=${line}&context=4`);
+        } catch (error) {
+          dashboardState.selectedSnippet = {
+            path,
+            line,
+            exists: false,
+            lines: [],
+          };
+        }
+        try {
+          dashboardState.selectedDiff = await loadJson(`/api/v1/files/diff?path=${encodeURIComponent(path)}&context=3`);
+        } catch (error) {
+          dashboardState.selectedDiff = {
+            path,
+            in_repo: false,
+            diff: '',
+          };
+        }
+        const detail = dashboardState.selectedTaskId ? dashboardState.taskDetails[dashboardState.selectedTaskId] : null;
+        renderTaskDetail(detail);
+      }
+
+      async function preloadTimelineMeta(detail) {
+        const execution = detail.execution || {};
+        const response = detail.response || {};
+        const recommendations = response.execution_recommendations || execution.recommendations || [];
+        const groups = collectFileTimelineEntries(recommendations, {});
+        if (!dashboardState.taskFileMeta[detail.task_id]) {
+          dashboardState.taskFileMeta[detail.task_id] = {};
+        }
+        const cache = dashboardState.taskFileMeta[detail.task_id];
+        const pending = groups.filter((group) => !group.unscoped && group.path && !cache[group.path]);
+        await Promise.all(
+          pending.map(async (group) => {
+            try {
+              const diff = await loadJson(`/api/v1/files/diff?path=${encodeURIComponent(group.path)}&context=0`);
+              cache[group.path] = {
+                inRepo: !!diff.in_repo,
+                hasDiff: !!diff.diff,
+                repoName: diff.repo_name || '',
+                relativePath: diff.relative_path || '',
+              };
+            } catch (error) {
+              cache[group.path] = {
+                inRepo: false,
+                hasDiff: false,
+                repoName: '',
+                relativePath: '',
+              };
+            }
+          })
+        );
+      }
+
+      function formatLocationLabel(location) {
+        const path = location.path || '';
+        const parts = path.split('/');
+        const tail = parts.slice(-2).join('/') || path;
+        const line = location.line ? `:${location.line}` : '';
+        return `${tail}${line}`;
+      }
+
+      function truncateText(value, limit = 300) {
+        const text = String(value || '').trim();
+        if (text.length <= limit) return text;
+        return `${text.slice(0, limit)}\n\n...`;
+      }
+
+      function renderCommandList(commands) {
+        const items = Array.isArray(commands) ? commands.filter(Boolean) : [];
+        if (!items.length) return '';
+        return `
+          <div class="muted" style="margin-top:8px;">commands:</div>
+          <div class="detail-list" style="margin-top:8px;">
+            ${items.map((command) => `<div class="muted"><code>${escapeHtml(command)}</code></div>`).join('')}
+          </div>
+        `;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;');
+      }
+
+      function escapeAttribute(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('"', '&quot;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;');
+      }
+
+      function escapeRegex(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
+      function renderInlineMarkdown(escapedText) {
+        const codeTokens = [];
+        let formatted = String(escapedText).replace(/`([^`]+?)`/g, (_, code) => {
+          const token = `@@INLINE_CODE_${codeTokens.length}@@`;
+          codeTokens.push(`<code class="inline-code">${code}</code>`);
+          return token;
+        });
+        formatted = formatted.replace(/\[([^\]]+?)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        formatted = formatted.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+        formatted = formatted.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+        formatted = formatted.replace(/@@INLINE_CODE_(\d+)@@/g, (_, index) => codeTokens[Number(index)] || '');
+        return formatted;
+      }
+
+      function highlightCodeSyntax(codeText, language = '') {
+        const keywordMap = {
+          py: ['def', 'class', 'import', 'from', 'return', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 'with', 'as', 'lambda', 'True', 'False', 'None'],
+          python: ['def', 'class', 'import', 'from', 'return', 'if', 'elif', 'else', 'for', 'while', 'try', 'except', 'with', 'as', 'lambda', 'True', 'False', 'None'],
+          js: ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'switch', 'case', 'break', 'continue', 'import', 'from', 'export', 'class', 'new', 'async', 'await', 'try', 'catch'],
+          ts: ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'switch', 'case', 'break', 'continue', 'import', 'from', 'export', 'class', 'new', 'async', 'await', 'try', 'catch', 'interface', 'type', 'extends', 'implements', 'readonly'],
+          java: ['public', 'private', 'protected', 'class', 'interface', 'enum', 'static', 'final', 'void', 'return', 'if', 'else', 'for', 'while', 'switch', 'case', 'break', 'continue', 'try', 'catch', 'new', 'extends', 'implements', 'package', 'import'],
+          json: ['true', 'false', 'null'],
+          sql: ['select', 'from', 'where', 'and', 'or', 'join', 'left', 'right', 'inner', 'outer', 'group', 'by', 'order', 'limit', 'insert', 'into', 'values', 'update', 'set', 'delete', 'create', 'table', 'index'],
+          sh: ['if', 'then', 'else', 'fi', 'for', 'do', 'done', 'case', 'esac', 'while', 'in', 'function'],
+          bash: ['if', 'then', 'else', 'fi', 'for', 'do', 'done', 'case', 'esac', 'while', 'in', 'function'],
+        };
+        const rawLang = String(language || '').toLowerCase();
+        const lang = rawLang === 'javascript' ? 'js' : (rawLang === 'typescript' ? 'ts' : rawLang);
+        let highlighted = escapeHtml(codeText);
+        const keywords = keywordMap[lang] || [];
+        if (keywords.length) {
+          const keywordPattern = new RegExp(`\\b(${keywords.map(escapeRegex).join('|')})\\b`, lang === 'sql' ? 'gi' : 'g');
+          highlighted = highlighted.replace(keywordPattern, '<span class="code-k">$1</span>');
+        }
+        highlighted = highlighted.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="code-n">$1</span>');
+        return highlighted;
+      }
+
+      function renderMarkdownTextBlock(rawText) {
+        const escaped = escapeHtml(String(rawText || '').replaceAll('\r', ''));
+        const lines = escaped.split('\n');
+        const htmlLines = lines.map((line) => {
+          if (!line.trim()) {
+            return '<div class="md-gap"></div>';
+          }
+          const headingMatch = /^(#{1,3})\s+(.*)$/.exec(line);
+          if (headingMatch) {
+            const headingClass = `md-h${headingMatch[1].length}`;
+            return `<div class="${headingClass}">${renderInlineMarkdown(headingMatch[2])}</div>`;
+          }
+          const bulletMatch = /^[-*]\s+(.*)$/.exec(line);
+          if (bulletMatch) {
+            return `<div class="md-li">• ${renderInlineMarkdown(bulletMatch[1])}</div>`;
+          }
+          const orderedMatch = /^(\d+)\.\s+(.*)$/.exec(line);
+          if (orderedMatch) {
+            return `<div class="md-li">${orderedMatch[1]}. ${renderInlineMarkdown(orderedMatch[2])}</div>`;
+          }
+          return `<div class="md-line">${renderInlineMarkdown(line)}</div>`;
+        });
+        return htmlLines.join('');
+      }
+
+      function renderMarkdown(value, options = {}) {
+        const raw = String(value || '');
+        const text = options && options.truncate ? truncateText(raw, options.truncate) : raw;
+        if (!text.trim()) {
+          return '';
+        }
+        const segments = [];
+        const fenceRegex = /```([a-zA-Z0-9_+\-]*)\n?([\s\S]*?)```/g;
+        let lastIndex = 0;
+        let match;
+        while ((match = fenceRegex.exec(text)) !== null) {
+          if (match.index > lastIndex) {
+            const plainText = text.slice(lastIndex, match.index);
+            segments.push(renderMarkdownTextBlock(plainText));
+          }
+          const language = (match[1] || 'text').trim() || 'text';
+          const code = match[2] || '';
+          const codeHtml = highlightCodeSyntax(code, language);
+          const lineCount = Math.max(1, code.split('\n').length);
+          segments.push(
+            `<div class="markdown-code-block">
+              <div class="code-head"><span>${escapeHtml(language)}</span><span>${lineCount} lines</span></div>
+              <pre><code>${codeHtml}</code></pre>
+            </div>`
+          );
+          lastIndex = fenceRegex.lastIndex;
+        }
+        if (lastIndex < text.length) {
+          segments.push(renderMarkdownTextBlock(text.slice(lastIndex)));
+        }
+        return segments.join('');
+      }
+
+      async function boot(preferredTaskId = null) {
+        const [summary, tasks, prompts, plugins, meta, repos, runtimeProcesses, modelMode, bugTriage] = await Promise.all([
+          loadJson('/api/v1/dashboard/summary'),
+          loadJson('/api/v1/tasks?limit=8'),
+          loadJson('/api/v1/prompts'),
+          loadJson('/api/v1/skills/plugins'),
+          loadJson('/api/v1/meta'),
+          loadJson('/api/v1/repos/status'),
+          loadJson('/api/v1/runtime/processes'),
+          loadJson('/api/v1/model/mode').catch(() => null),
+          loadJson('/api/v1/bug-triage/config').catch(() => null),
+        ]);
+        const taskItems = tasks.items || [];
+        dashboardState.meta = meta;
+        dashboardState.promptItems = prompts.items || [];
+        dashboardState.repoItems = repos.items || [];
+        dashboardState.plugins = plugins.items || [];
+        dashboardState.taskItems = taskItems;
+        if (modelMode) {
+          dashboardState.modelMode = modelMode;
+          dashboardState.modelModeStatus = 'success';
+          dashboardState.meta.model_name = modelMode.model_name || dashboardState.meta.model_name;
+        }
+        if (bugTriage) {
+          dashboardState.bugTriage = bugTriage;
+          dashboardState.bugTriageStatus = 'success';
+          dashboardState.bugTriageDraft = JSON.stringify((bugTriage && bugTriage.config) || {}, null, 2);
+        }
+        const detailPairs = await Promise.all(
+          taskItems.map(async (item) => {
+            if (item.status !== 'blocked' && item.status !== 'failed') {
+              return [item.task_id, null];
+            }
+            try {
+              const detail = await loadJson(`/api/v1/tasks/${item.task_id}`);
+              return [item.task_id, detail];
+            } catch (error) {
+              return [item.task_id, null];
+            }
+          })
+        );
+        const taskDetails = Object.fromEntries(detailPairs);
+        dashboardState.taskDetails = taskDetails;
+
+        renderSummary(summary);
+        renderTasks(taskItems, taskDetails);
+        renderPrompts(prompts.items || []);
+        renderPlugins(plugins.items || []);
+        renderRepos(repos.items || []);
+        renderServices((meta.workspace && meta.workspace.services) || []);
+        renderRuntimeProcesses(runtimeProcesses.items || []);
+        renderRuntimeStrip(meta);
+        renderWorkflowOptions(meta);
+        renderExecutionModeOptions(meta);
+        renderRepoSelector(repos.items || []);
+        renderComposerPresets(meta);
+        ensureComposerDefaults();
+        renderConversationThread();
+        renderLatestFeedback();
+        renderReadinessPanel(meta);
+        renderFlowAudit(meta);
+        renderGitHubSkills(meta);
+        renderModelModePanel();
+        renderBugTriagePanel();
+        if (!modelMode && dashboardState.modelModeStatus === 'idle') {
+          loadModelMode().catch((error) => {
+            console.warn('loadModelMode failed', error);
+          });
+        }
+        if (!bugTriage && dashboardState.bugTriageStatus === 'idle') {
+          loadBugTriageConfig().catch((error) => {
+            console.warn('loadBugTriageConfig failed', error);
+          });
+        }
+        if (dashboardState.modelCheckStatus === 'idle') {
+          runModelCheck().catch((error) => {
+            console.warn('runModelCheck failed', error);
+          });
+        }
+        document.getElementById('raw').textContent = JSON.stringify(
+          {
+            summary,
+            execution_modes: meta.execution_modes || [],
+            workflow_preset_path: meta.workflow_preset_path,
+            bug_triage_config_path: meta.bug_triage_config_path,
+          },
+          null,
+          2
+        );
+
+        const nextSelectedTaskId =
+          preferredTaskId
+          || dashboardState.selectedTaskId
+          || (taskItems.find((item) => item.status === 'blocked') || taskItems[0] || {}).task_id
+          || null;
+        if (nextSelectedTaskId) {
+          await selectTask(nextSelectedTaskId, { switchView: false });
+        } else {
+          renderTaskDetail(null);
+        }
+      }
+
+      dashboardState.conversationMessages = safeReadConversation();
+      dashboardState.favoriteTaskIds = safeReadFavoriteTasks();
+      dashboardState.activeView = safeReadActiveView();
+      initViewTabs();
+      initTaskDetailModal();
+      setActiveView(dashboardState.activeView, { persist: false, updateHash: false });
+      const conversationThreadRoot = document.getElementById('conversation-thread');
+      conversationThreadRoot.addEventListener('scroll', () => {
+        const distanceToBottom = conversationThreadRoot.scrollHeight - conversationThreadRoot.scrollTop - conversationThreadRoot.clientHeight;
+        dashboardState.conversationAutoScroll = distanceToBottom < 56;
+      });
+      document.getElementById('composer-submit').addEventListener('click', async () => {
+        await submitConversation();
+      });
+      document.getElementById('composer-clear').addEventListener('click', () => {
+        clearConversationThread();
+      });
+      document.getElementById('composer-stop-stack').addEventListener('click', async () => {
+        await stopRuntimeProcesses({ repo_names: ['backend', 'frontend'] }, 'backend + frontend');
+      });
+      document.getElementById('reload-runtime-config').addEventListener('click', async () => {
+        await reloadRuntimeConfig();
+      });
+      document.getElementById('run-model-check').addEventListener('click', async () => {
+        await runModelCheck();
+      });
+      document.getElementById('task-search').addEventListener('input', (event) => {
+        dashboardState.taskFilterText = event.target.value || '';
+        renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+      });
+      document.getElementById('task-status-filter').addEventListener('change', (event) => {
+        dashboardState.taskFilterStatus = event.target.value || '';
+        renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+      });
+      document.getElementById('task-favorites-toggle').addEventListener('click', () => {
+        dashboardState.taskFilterFavoritesOnly = !dashboardState.taskFilterFavoritesOnly;
+        const button = document.getElementById('task-favorites-toggle');
+        button.classList.toggle('active', dashboardState.taskFilterFavoritesOnly);
+        renderTasks(dashboardState.taskItems, dashboardState.taskDetails);
+      });
+
+      boot().catch((error) => {
+        document.getElementById('raw').textContent = String(error);
+      });
+    </script>
+  </body>
+</html>
