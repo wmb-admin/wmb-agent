@@ -25,6 +25,58 @@
 - 任务操作顺序：`OPERATION_FLOW.md`
 - 工作区真实配置：`.agent/workspace-profile.local.json`
 
+## 最短启动路径（3 分钟）
+
+如果你只关心“项目怎么跑起来”，按下面执行即可。
+
+1. 进入项目目录
+
+```bash
+cd /Users/wmb/IdeaProjects/myself/wmb-agent
+```
+
+2. 准备环境变量（首次）
+
+```bash
+cp .env.example .env
+```
+
+3. 选择一个启动模式并启动服务（推荐 `dev`）
+
+```bash
+# 低负载开发模式（推荐日常使用）
+./scripts/start-agent-dev.sh
+
+# 高质量推理模式（35B）
+# ./scripts/start-agent-hq.sh
+
+# 稳定排障模式（更高超时和重试）
+# ./scripts/start-agent-stable.sh
+```
+
+4. 打开控制台
+
+```text
+http://127.0.0.1:8787/dashboard
+```
+
+5. 验证服务是否正常
+
+```bash
+curl http://127.0.0.1:8787/health
+```
+
+6. 停止服务
+
+- 如果你是前台启动（上面脚本默认前台）：`Ctrl + C`
+- 如果你让 agent 拉起了前后端业务进程，可执行：
+
+```bash
+curl -X POST http://127.0.0.1:8787/api/v1/runtime/processes/stop \
+  -H 'Content-Type: application/json' \
+  -d '{"phase":"start"}'
+```
+
 ## 当前默认联调配置（luozuo）
 
 当前工作区已经按本地联调习惯预置了以下约定：
