@@ -88,7 +88,7 @@ class PromptRuntime:
         active_prompt = self.prompt_registry.get_active_entry()
         raw_text = load_docx_text(Path(active_prompt.source_path))
         definition = parse_prompt_definition(raw_text)
-        return merge_plugin_skills(definition, self.skill_plugin_registry.list_plugins())
+        return merge_plugin_skills(definition, self.skill_plugin_registry.list_active_plugins())
 
     def reload(self) -> None:
         """热重载 Prompt、插件、workflow 与 memory 服务。"""

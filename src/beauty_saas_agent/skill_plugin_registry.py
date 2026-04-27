@@ -110,6 +110,27 @@ class SkillPluginRegistry:
             items.append(plugin)
         return items
 
+    def list_active_plugins(self) -> List[SkillPlugin]:
+        """返回运行时真正参与技能合并的插件列表（含策略过滤）。"""
+        plugins = self.list_plugins()
+        mode = (self.settings.skill_runtime_mode or "curated").strip().lower()
+        if mode not in {"all", "curated"}:
+            mode = "curated"
+
+        allowlist = {name.strip() for name in self.settings.skill_plugin_allowlist if name.strip()}
+        blocklist = {name.strip() for name in self.settings.skill_plugin_blocklist if name.strip()}
+
+        active: List[SkillPlugin] = []
+        for plugin in plugins:
+            if not plugin.enabled:
+                continue
+            if plugin.name in blocklist:
+                continue
+            if mode == "curated" and allowlist and plugin.name not in allowlist:
+                continue
+            active.append(plugin)
+        return active
+
     def register(
         self,
         name: str,
@@ -155,7 +176,14 @@ class SkillPluginRegistry:
     def meta(self) -> Dict[str, object]:
         """返回注册中心元信息。"""
         plugins = self.list_plugins()
+        active_plugins = self.list_active_plugins()
         return {
             "registry_path": str(self.path),
+            "runtime_policy": {
+                "mode": (self.settings.skill_runtime_mode or "curated").strip().lower(),
+                "allowlist": list(self.settings.skill_plugin_allowlist),
+                "blocklist": list(self.settings.skill_plugin_blocklist),
+                "active_plugin_names": [plugin.name for plugin in active_plugins],
+            },
             "items": [asdict(plugin) for plugin in plugins],
         }

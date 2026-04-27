@@ -56,7 +56,7 @@ class WorkspaceProfileTestCase(unittest.TestCase):
                     {
                         "git_auth": {
                             "username": "demo",
-                            "password": "secret"
+                            "password": "git-password"
                         }
                     },
                     ensure_ascii=False,
@@ -93,7 +93,7 @@ class WorkspaceProfileTestCase(unittest.TestCase):
             self.assertEqual(profile.services[0].name, "mysql")
             self.assertEqual(profile.services[0].database, "ruoyi-vue-pro")
             self.assertEqual(secrets.git_username, "demo")
-            self.assertEqual(secrets.git_password, "secret")
+            self.assertEqual(secrets.git_password, "git-password")
 
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ curl -X POST http://127.0.0.1:8787/api/v1/runtime/processes/stop \
 - 后端启动目标服务：`gateway-server`、`system-server`、`infra-server`、`shop-server`
 - 前端开发地址：`http://127.0.0.1:5777`
 - 网关地址：`http://127.0.0.1:48080`
-- Nacos 使用远端地址：`<YOUR_NACOS_HOST>:8848`（注意是 `host:port`，不是 `/nacos` 控制台路径）
+- Nacos 使用远端地址：`<YOUR_NACOS_HOST:PORT>`（注意是 `host:port`，不是 `/nacos` 控制台路径）
 - 默认注册命名空间：`<YOUR_NACOS_NAMESPACE_ID>`
 
 ## Agent 快速上手
@@ -401,7 +401,7 @@ PYTHONPATH=src python3 -m beauty_saas_agent.cli model-check
 如果你启用了项目记忆，建议先确认本地 MySQL 可连接（首次运行会自动创建独立库与表）：
 
 ```bash
-/Applications/ServBay/bin/mysql -h127.0.0.1 -P3306 -uroot -p<your_password> -e "SELECT VERSION();"
+/Applications/ServBay/bin/mysql -h127.0.0.1 -P3306 -uroot -p'<your_password>' -e "SELECT VERSION();"
 ```
 
 4. 查看仓库配置
@@ -518,6 +518,22 @@ curl -X POST http://127.0.0.1:8787/api/v1/runtime/processes/stop \
 - `关闭前后端项目`：停止所有 `phase=start` 的后台进程
 - `查看详情弹窗`：在任务追踪处快速打开完整详情，不再占用右侧固定面板
 - `快速重跑`：沿用原请求，覆盖 execution mode 后再次执行
+
+### 借鉴 Superpowers 的执行门禁（推荐）
+
+为了降低“看起来流转正常但结果不可用”的概率，建议按下面 5 个门禁执行任务：
+
+1. `Define`：先明确目标和验收标准，不清楚就先补问题边界。
+2. `Plan`：先拆任务再写代码，尽量做到每一步都有文件路径、命令和可验证结果。
+3. `Build`：后端/前端仅在“修改面独立、没有共享状态冲突”时并行；否则按依赖顺序串行。
+4. `Verify`：至少执行一次回归或质量审计，再给结论，避免只看单条日志就宣布完成。
+5. `Close`：任务结束后输出阻断与恢复建议，并可一键关闭后台进程，保持环境可复现。
+
+并行派工建议（借鉴 `dispatching-parallel-agents` 思路）：
+
+- 适合并行：多个失败点根因独立、修改文件集合基本不重叠、互不依赖上下文。
+- 不适合并行：同一链路故障、共享状态强耦合、需要先修上游才能验证下游。
+- 执行顺序建议：`orchestrator` 拆分 -> `backend/frontend` 并行（可并行时）-> `ops` 收口校验。
 
 ## CLI 用法
 
@@ -677,6 +693,20 @@ PYTHONPATH=src python3 -m beauty_saas_agent.cli run \
   --version v1.0.1 \
   --workflow backend_change_review \
   --task "复核本次后端改动的覆盖率、差异风险和静态扫描结果"
+```
+
+```bash
+PYTHONPATH=src python3 -m beauty_saas_agent.cli run \
+  --version v1.0.1 \
+  --workflow full_iteration_pro \
+  --task "按计划驱动方式并行完成前后端改动，并在收口阶段完成质量校验"
+```
+
+```bash
+PYTHONPATH=src python3 -m beauty_saas_agent.cli run \
+  --version v1.0.1 \
+  --workflow bug_fix_deep \
+  --task "先自动定位登录失败根因，再按最小改动修复并回归验证"
 ```
 
 列出任务历史：
@@ -1002,7 +1032,7 @@ curl -X POST http://127.0.0.1:8787/api/v1/runtime/processes/stop \
 6. （可选）Nacos 校验服务注册
 
 ```bash
-curl -X POST 'http://<YOUR_NACOS_HOST>:8848/nacos/v1/auth/users/login' \
+curl -X POST 'http://<YOUR_NACOS_HOST:PORT>/nacos/v1/auth/users/login' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'username=nacos&password=******'
 ```
@@ -1010,7 +1040,7 @@ curl -X POST 'http://<YOUR_NACOS_HOST>:8848/nacos/v1/auth/users/login' \
 拿到 `accessToken` 后：
 
 ```bash
-curl 'http://<YOUR_NACOS_HOST>:8848/nacos/v1/ns/service/list?pageNo=1&pageSize=200&namespaceId=<YOUR_NACOS_NAMESPACE_ID>&groupName=DEFAULT_GROUP&accessToken=<token>'
+curl 'http://<YOUR_NACOS_HOST:PORT>/nacos/v1/ns/service/list?pageNo=1&pageSize=200&namespaceId=<YOUR_NACOS_NAMESPACE_ID>&groupName=DEFAULT_GROUP&accessToken=<token>'
 ```
 
 ## 仓库配置
@@ -1056,7 +1086,7 @@ curl 'http://<YOUR_NACOS_HOST>:8848/nacos/v1/ns/service/list?pageNo=1&pageSize=2
 
 当前后端 Nacos 推荐写法：
 
-- `LUOZUO_NACOS_SERVER_ADDR=<YOUR_NACOS_HOST>:8848`（不要带 `/nacos`）
+- `LUOZUO_NACOS_SERVER_ADDR=<YOUR_NACOS_HOST:PORT>`（不要带 `/nacos`）
 - `LUOZUO_NACOS_NAMESPACE=<YOUR_NACOS_NAMESPACE_ID>`
 - `LUOZUO_NACOS_GROUP=DEFAULT_GROUP`
 
@@ -1068,6 +1098,14 @@ curl 'http://<YOUR_NACOS_HOST>:8848/nacos/v1/ns/service/list?pageNo=1&pageSize=2
 - 包管理器类型：`npm`、`pnpm` 或 `yarn`
 
 ## 外部 Skill 集成说明
+
+先说明“运行时到底怎么拿 Skills”：
+
+1. 先从当前激活的 Prompt（`.docx`）解析出原生 Skills。
+2. 再从 Skill 插件注册表读取插件 Skills（`skills/generated`、`skills/standardized`、`skills/imported/*` 等）。
+3. 运行时按 `SKILL_RUNTIME_MODE` + allow/block 策略筛掉不需要的插件，只合并“活跃插件”的 Skills。
+4. 单次任务执行时，再按 `workflow + 显式 skills` 做二次过滤；不在当前请求里的 Skills 不会参与本次推理。
+5. 最终由 `owner_agent`（或自动推断）把 Skills 分配到 `orchestrator/backend/frontend/ops/bug_inspector`。
 
 当前版本已经支持两类 Skill 来源：
 
@@ -1091,15 +1129,17 @@ curl 'http://<YOUR_NACOS_HOST>:8848/nacos/v1/ns/service/list?pageNo=1&pageSize=2
 
 当前已固化的 workflow：
 
-- `frontend_enhanced`: 内置前端流程 + `frontend-skill` + `playwright`
-- `frontend_visual_upgrade`: 偏页面改版与视觉升级
-- `frontend_regression`: 偏联调后回归、自测与浏览器流程验证
-- `backend_tdd`: `tdd` + 内置后端实现/测试/接口文档流程
-- `backend_api_tdd`: 偏后端接口交付闭环
-- `backend_change_review`: 偏后端改动复核、覆盖率与静态分析
+- `frontend_enhanced`: 内置前端流程 + `frontend-skill` + `playwright` + 商用化 UI/性能优化
+- `frontend_visual_upgrade`: 偏页面改版与视觉升级（含 UI 工程化与性能关注点）
+- `frontend_regression`: 偏联调后回归、自测与浏览器流程验证（含系统化故障排查）
+- `backend_tdd`: `tdd` + 接口设计 + 文档驱动实现 + 内置后端测试流程
+- `backend_api_tdd`: 偏后端接口交付闭环（规划 -> 实现 -> 测试 -> 文档）
+- `backend_change_review`: 偏后端改动复核、覆盖率与静态分析（含故障恢复视角）
 - `quality_audit`: `codeql`、`semgrep`、`coverage-analysis`、`supply-chain-risk-auditor` 等质量审计能力
 - `release_guard`: `security-best-practices`、`gh-fix-ci`、`sentry` + 内置发布守护流程
 - `pre_release_audit`: 更贴近上线前联查，串联后端测试、前端回归、监控与 CI 风险
+- `full_iteration_pro`: 借鉴 Superpowers 的“先规划再执行”门禁，覆盖全链路增强版迭代
+- `bug_fix_deep`: 先由 `bug_inspector` 结构化收集证据，再分派前后端修复并由 ops 收口
 
 推荐实践：
 
@@ -1107,6 +1147,24 @@ curl 'http://<YOUR_NACOS_HOST>:8848/nacos/v1/ns/service/list?pageNo=1&pageSize=2
 - 导入 GitHub Skill 时尽量带上 `--owner-agent`
 - 若外部 Skill 与内置 Skill 同名，插件版本会覆盖运行时中的同名 Skill，便于你逐步升级内置能力
 - 你可以直接编辑 `.agent/workflow-presets.local.json` 增删项目级 workflow，无需修改 Python 常量
+- 如果你希望继续借鉴 `obra/superpowers`，优先迁移“流程门禁”和“并行判定”这类方法论，再决定是否导入其 Skill 文件
+
+### Skill 规整策略（已接入）
+
+为避免“中英混杂 + 全量启用”导致上下文噪音，项目新增了运行时 Skill 策略：
+
+- `SKILL_RUNTIME_MODE=curated|all`
+- `SKILL_PLUGIN_ALLOWLIST=<逗号分隔插件名>`
+- `SKILL_PLUGIN_BLOCKLIST=<逗号分隔插件名>`
+
+默认 profile 已改为 `curated`，只启用你当前核心插件集合（内置 + addy + 必要前端/bug 套件）。  
+如果你要临时放开全部插件，改为：
+
+```env
+SKILL_RUNTIME_MODE=all
+```
+
+想精确裁剪时，仅改 allowlist 即可。
 
 ## 常见阻断与排查
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict
 
@@ -41,13 +41,16 @@ class Settings:
     skill_plugin_registry_path: str
     skill_import_root: str
     workflow_preset_path: str
+    skill_runtime_mode: str = "curated"
+    skill_plugin_allowlist: list[str] = field(default_factory=list)
+    skill_plugin_blocklist: list[str] = field(default_factory=list)
     bug_triage_config_path: str = ""
     memory_enabled: bool = False
     memory_mysql_bin: str = "/Applications/ServBay/bin/mysql"
     memory_mysql_host: str = "127.0.0.1"
     memory_mysql_port: int = 3306
     memory_mysql_user: str = "root"
-    memory_mysql_password: str = "123456"
+    memory_mysql_password: str = ""
     memory_mysql_database: str = "wmb_agent_memory"
     memory_recall_limit: int = 6
     memory_fetch_limit: int = 200
@@ -92,6 +95,13 @@ class Settings:
                 return False
             return default
 
+        def get_csv(names: tuple[str, ...], default: str = "") -> list[str]:
+            """解析逗号分隔列表，自动去空与去重。"""
+            raw = get_any(names, default)
+            items = [item.strip() for item in raw.split(",") if item.strip()]
+            # 保持顺序去重
+            return list(dict.fromkeys(items))
+
         return cls(
             prompt_docx_path=get_any(
                 ("PROMPT_DOCX_PATH",),
@@ -111,6 +121,24 @@ class Settings:
             prompt_registry_path=get_any(("PROMPT_REGISTRY_PATH",), ".agent/prompt-registry.local.json"),
             skill_plugin_registry_path=get_any(("SKILL_PLUGIN_REGISTRY_PATH",), ".agent/skill-plugins.local.json"),
             skill_import_root=get_any(("SKILL_IMPORT_ROOT",), "skills/imported"),
+            skill_runtime_mode=get_any(("SKILL_RUNTIME_MODE",), "curated"),
+            skill_plugin_allowlist=get_csv(
+                ("SKILL_PLUGIN_ALLOWLIST",),
+                ",".join(
+                    [
+                        "generated-skills",
+                        "standardized-skills",
+                        "glebis-tdd",
+                        "openai-frontend-suite",
+                        "openai-bug-qa-suite",
+                        "addy-orchestrator-suite",
+                        "addy-backend-suite",
+                        "addy-frontend-suite",
+                        "addy-bug-suite",
+                    ]
+                ),
+            ),
+            skill_plugin_blocklist=get_csv(("SKILL_PLUGIN_BLOCKLIST",), ""),
             workflow_preset_path=get_any(("WORKFLOW_PRESET_PATH",), ".agent/workflow-presets.local.json"),
             bug_triage_config_path=get_any(("BUG_TRIAGE_CONFIG_PATH",), ".agent/bug-triage-rules.local.json"),
             memory_enabled=get_bool(("MEMORY_ENABLED",), True),
@@ -118,7 +146,7 @@ class Settings:
             memory_mysql_host=get_any(("MEMORY_MYSQL_HOST",), "127.0.0.1"),
             memory_mysql_port=get_int(("MEMORY_MYSQL_PORT",), 3306),
             memory_mysql_user=get_any(("MEMORY_MYSQL_USER",), "root"),
-            memory_mysql_password=get_any(("MEMORY_MYSQL_PASSWORD",), "123456"),
+            memory_mysql_password=get_any(("MEMORY_MYSQL_PASSWORD",), ""),
             memory_mysql_database=get_any(("MEMORY_MYSQL_DATABASE",), "wmb_agent_memory"),
             memory_recall_limit=get_int(("MEMORY_RECALL_LIMIT",), 6),
             memory_fetch_limit=get_int(("MEMORY_FETCH_LIMIT",), 200),
